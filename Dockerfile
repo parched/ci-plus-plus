@@ -19,12 +19,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
   && add-apt-repository -y ppa:deadsnakes/ppa \
   && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   python${PYTHON_VERSION}-full \
-  python-is-python3 \
   && rm -rf /var/lib/apt/lists/*
   
 # Poetry
 ENV PEOTRY_VERSION=1.2.0b1
 ENV POETRY_HOME=/opt/poetry
 ENV PATH=${PATH}:${POETRY_HOME}/bin
-RUN curl -sSL https://install.python-poetry.org | python3 - \
+RUN curl -sSL https://install.python-poetry.org | python${PYTHON_VERSION} - \
   && poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
