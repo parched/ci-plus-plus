@@ -1,0 +1,12 @@
+[flake8]
+exclude = .git,__pycache__,.pytest_cache,build,dist,.cache,.venv,.poetry
+select = B,BLK,C,DAR,E,F,W
+# Match black
+max-line-length = 88
+ignore =
+    # Conflicts with black formatter, see https://github.com/PyCQA/pycodestyle/issues/373
+    E203,
+    # Now goes against PEP8 (and conflicts with W504)
+    W503
+# darglint - https://github.com/terrencepreilly/darglint#strictness-configuration
+strictness = long
