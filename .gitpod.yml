@@ -2,3 +2,9 @@ image:
   file: Dockerfile
 tasks:
   - init: poetry install
+
+vscode:
+  extensions:
+    - ms-python.python
+    - ms-pyright.pyright
+    - redhat.vscode-yaml
