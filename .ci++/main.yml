@@ -1,0 +1,70 @@
+
+on:
+  pull_request:
+    targets:
+      - checks
+      - docs
+
+jobs:
+  checks:
+    needs:
+      - flake8
+      - pylint
+      - pytest
+      - pyright
+
+  docs:
+    paths:
+      - README.md
+    extra-key: something
+    runs-on: ubuntu-20.04
+    steps:
+      - run: echo building docs from readme
+
+  flake8:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - run: |
+          pip install poetry
+          poetry install
+      - run: poetry run flake8
+
+  pright:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - run: |
+          pip install poetry
+          poetry install
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: npm install -g pyright@1.1.234
+      - run: poetry run pyright
+
+  pylint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - run: |
+          pip install poetry
+          poetry install
+      - run: poetry run pylint .
+
+  pytest:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - run: |
+          pip install poetry
+          poetry install
+      - run: poetry run pytest
