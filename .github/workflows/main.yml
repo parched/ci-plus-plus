@@ -1,0 +1,439 @@
+on:
+  pull_request:
+  push:
+#    targets:
+#      - checks
+#      - docs
+#      - say-hi
+
+jobs:
+  docs:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set "."
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - run: echo building docs from readme
+
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ needs.cixx.outputs.key-docs }}
+    needs:
+    - cixx
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-docs
+      == 'true')
+  say-hi:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set 
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - run: echo HI
+
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ needs.cixx.outputs.key-say-hi }}
+    needs:
+    - cixx
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-say-hi
+      == 'true')
+  flake8:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set "."
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry run flake8
+
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ needs.cixx.outputs.key-flake8 }}
+    needs:
+    - cixx
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-flake8
+      == 'true')
+  pyright:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set "."
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - run: npm install -g pyright@1.1.234
+    - run: poetry run pyright
+
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ needs.cixx.outputs.key-pyright }}
+    needs:
+    - cixx
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pyright
+      == 'true')
+  pylint:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set "."
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry run pylint .
+
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ needs.cixx.outputs.key-pylint }}
+    needs:
+    - cixx
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pylint
+      == 'true')
+  pytest:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set "."
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry run pytest
+
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ needs.cixx.outputs.key-pytest }}
+    needs:
+    - cixx
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pytest
+      == 'true')
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set "."
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry build
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: dist/
+        key: ${{ needs.cixx.outputs.key-build }}
+    needs:
+    - cixx
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-build
+      == 'true')
+  check-self:
+    runs-on: ubuntu-20.04
+    needs:
+    - build
+    - cixx
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        git sparse-checkout set ".ci++" ".github/workflows"
+        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - name: Restore build
+      uses: martijnhols/actions-cache/restore@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: dist/
+        key: ${{ needs.cixx.outputs.key-build }}
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install cixx --find-links dist/
+        ci++ ".ci++/main.yml" ".github/workflows/main.yml.new"
+        diff ".github/workflows/main.yml.new" ".github/workflows/main.yml"
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ needs.cixx.outputs.key-check-self }}
+    if: always() && (needs.cixx.result == 'success') && (needs.build.result == 'success'
+      || needs.build.result == 'skipped') && (needs.cixx.outputs.needs-build-check-self
+      == 'true')
+  cixx:
+    runs-on: ubuntu-20.04
+    steps:
+    - id: git-fetch
+      name: Git fetch
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git -c protocol.version=2 fetch --filter=blob:none --tags origin ${GITHUB_SHA}
+        last_tag=$(git describe --abbrev=0 --tags ${GITHUB_SHA})
+        count_since_last_tag=$(git rev-list "${last_tag}..${GITHUB_SHA}" --count)"
+    - id: generate-keys
+      name: Generate keys
+      shell: bash
+      run: |
+        function git_hash_files {
+            local files="true"
+
+            for file in "$@"
+            do
+                if [ $files = "true" ]
+                then
+                    if [ "$file" = "--" ]
+                    then
+                        files="false"
+                    elif [ -n "$file" ]
+                    then
+                        sha=$(git rev-parse "${GITHUB_SHA}:$file")
+                        echo "$file: $sha" 1>&2
+                        echo -n $sha
+                    fi
+                else
+                    echo "string: $file" 1>&2
+                    echo -n "$file"
+                fi
+            done | git hash-object --stdin
+        }
+        declare -A keys
+        keys[docs]="docs-$(git-hash-files "README.md" -- )"
+        echo "::set-output name=docs::${keys[docs]}"
+
+        keys[say-hi]="say-hi-$(git-hash-files  -- )"
+        echo "::set-output name=say-hi::${keys[say-hi]}"
+
+        keys[flake8]="flake8-$(git-hash-files "." -- )"
+        echo "::set-output name=flake8::${keys[flake8]}"
+
+        keys[pyright]="pyright-$(git-hash-files "." -- )"
+        echo "::set-output name=pyright::${keys[pyright]}"
+
+        keys[pylint]="pylint-$(git-hash-files "." -- )"
+        echo "::set-output name=pylint::${keys[pylint]}"
+
+        keys[pytest]="pytest-$(git-hash-files "." -- )"
+        echo "::set-output name=pytest::${keys[pytest]}"
+
+        keys[build]="build-$(git-hash-files "." -- )"
+        echo "::set-output name=build::${keys[build]}"
+
+        keys[build]="build-$(git-hash-files "." -- )"
+        echo "::set-output name=build::${keys[build]}"
+
+        keys[check-self]="check-self-$(git-hash-files ".ci++" ".github/workflows" -- "${keys[build]}")"
+        echo "::set-output name=check-self::${keys[check-self]}"
+    - name: Check docs cache
+      id: check-cache-docs
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ steps.generate-keys.outputs.docs }}
+    - name: Check say-hi cache
+      id: check-cache-say-hi
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ steps.generate-keys.outputs.say-hi }}
+    - name: Check flake8 cache
+      id: check-cache-flake8
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ steps.generate-keys.outputs.flake8 }}
+    - name: Check pyright cache
+      id: check-cache-pyright
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ steps.generate-keys.outputs.pyright }}
+    - name: Check pylint cache
+      id: check-cache-pylint
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ steps.generate-keys.outputs.pylint }}
+    - name: Check pytest cache
+      id: check-cache-pytest
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ steps.generate-keys.outputs.pytest }}
+    - name: Check build cache
+      id: check-cache-build
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: dist/
+        key: ${{ steps.generate-keys.outputs.build }}
+    - name: Check check-self cache
+      id: check-cache-check-self
+      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: ''
+        key: ${{ steps.generate-keys.outputs.check-self }}
+    outputs:
+      key-docs: ${{ steps.generate-keys.outputs.docs }}
+      key-say-hi: ${{ steps.generate-keys.outputs.say-hi }}
+      key-flake8: ${{ steps.generate-keys.outputs.flake8 }}
+      key-pyright: ${{ steps.generate-keys.outputs.pyright }}
+      key-pylint: ${{ steps.generate-keys.outputs.pylint }}
+      key-pytest: ${{ steps.generate-keys.outputs.pytest }}
+      key-build: ${{ steps.generate-keys.outputs.build }}
+      key-check-self: ${{ steps.generate-keys.outputs.check-self }}
+      needs-build-docs: ${{ steps.check-cache-docs.outputs.cache-hit != 'true' }}
+      needs-build-say-hi: ${{ steps.check-cache-say-hi.outputs.cache-hit != 'true'
+        }}
+      needs-build-flake8: ${{ steps.check-cache-flake8.outputs.cache-hit != 'true'
+        }}
+      needs-build-pyright: ${{ steps.check-cache-pyright.outputs.cache-hit != 'true'
+        }}
+      needs-build-pylint: ${{ steps.check-cache-pylint.outputs.cache-hit != 'true'
+        }}
+      needs-build-pytest: ${{ steps.check-cache-pytest.outputs.cache-hit != 'true'
+        }}
+      needs-build-build: ${{ steps.check-cache-build.outputs.cache-hit != 'true' }}
+      needs-build-check-self: ${{ steps.check-cache-check-self.outputs.cache-hit !=
+        'true' }}
