@@ -273,7 +273,6 @@ def _create_cixx_job(
 
 def _get_git_fetch_step() -> dict[str, object]:
     return {
-        # TODO: fetch without tags and depth=1 if describe not needed
         # TODO: handle self hosted where directory might not be clean
         # and we want to re-used= at least it's git objects
         "id": "git-fetch",
@@ -285,9 +284,7 @@ git init .
 git remote add origin \
 "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
 git config --local gc.auto 0
-git -c protocol.version=2 fetch --filter=blob:none --tags origin ${GITHUB_SHA}
-last_tag=$(git describe --abbrev=0 --tags ${GITHUB_SHA})
-count_since_last_tag=$(git rev-list "${last_tag}..${GITHUB_SHA}" --count)"
+git -c protocol.version=2 fetch --filter=blob:none --depth=1 origin ${GITHUB_SHA}
 """
         ),
     }

@@ -309,9 +309,7 @@ jobs:
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
-        git -c protocol.version=2 fetch --filter=blob:none --tags origin ${GITHUB_SHA}
-        last_tag=$(git describe --abbrev=0 --tags ${GITHUB_SHA})
-        count_since_last_tag=$(git rev-list "${last_tag}..${GITHUB_SHA}" --count)"
+        git -c protocol.version=2 fetch --filter=blob:none --depth=1 origin ${GITHUB_SHA}
     - id: generate-keys
       name: Generate keys
       shell: bash
