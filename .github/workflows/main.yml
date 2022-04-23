@@ -337,31 +337,31 @@ jobs:
             done | git hash-object --stdin
         }
         declare -A keys
-        keys[docs]="docs-$(git-hash-files "README.md" -- )"
+        keys[docs]="docs-$(git_hash_files "README.md" -- )"
         echo "::set-output name=docs::${keys[docs]}"
 
         keys[say-hi]="say-hi-$RANDOM$RANDOM"
         echo "::set-output name=say-hi::${keys[say-hi]}"
 
-        keys[flake8]="flake8-$(git-hash-files "." -- )"
+        keys[flake8]="flake8-$(git_hash_files "." -- )"
         echo "::set-output name=flake8::${keys[flake8]}"
 
-        keys[pyright]="pyright-$(git-hash-files "." -- )"
+        keys[pyright]="pyright-$(git_hash_files "." -- )"
         echo "::set-output name=pyright::${keys[pyright]}"
 
-        keys[pylint]="pylint-$(git-hash-files "." -- )"
+        keys[pylint]="pylint-$(git_hash_files "." -- )"
         echo "::set-output name=pylint::${keys[pylint]}"
 
-        keys[pytest]="pytest-$(git-hash-files "." -- )"
+        keys[pytest]="pytest-$(git_hash_files "." -- )"
         echo "::set-output name=pytest::${keys[pytest]}"
 
-        keys[build]="build-$(git-hash-files "." -- )"
+        keys[build]="build-$(git_hash_files "." -- )"
         echo "::set-output name=build::${keys[build]}"
 
-        keys[build]="build-$(git-hash-files "." -- )"
+        keys[build]="build-$(git_hash_files "." -- )"
         echo "::set-output name=build::${keys[build]}"
 
-        keys[check-self]="check-self-$(git-hash-files ".ci++" ".github/workflows" -- "${keys[build]}")"
+        keys[check-self]="check-self-$(git_hash_files ".ci++" ".github/workflows" -- "${keys[build]}")"
         echo "::set-output name=check-self::${keys[check-self]}"
     - name: Check docs cache
       id: check-cache-docs

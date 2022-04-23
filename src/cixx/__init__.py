@@ -312,7 +312,7 @@ def _get_key_generator_step(jobs: Mapping[str, _JobDetails]) -> dict[str, object
         else:
             paths_quoted = " ".join(f'"{normpath(path)}"' for path in job.paths)
             needs_quoted = " ".join(f'"${{keys[{need}]}}"' for need in job.needs)
-            suffix = f"$(git-hash-files {paths_quoted} -- {needs_quoted})"
+            suffix = f"$(git_hash_files {paths_quoted} -- {needs_quoted})"
         # TODO: include extra-key
         script = dedent(
             f"""\
