@@ -67,8 +67,7 @@ jobs:
         key: ${{ needs.cixx.outputs.key-say-hi }}
     needs:
     - cixx
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-say-hi
-      == 'true')
+    if: always() && (needs.cixx.result == 'success')
   flake8:
     runs-on: ubuntu-20.04
     steps:
@@ -343,7 +342,7 @@ jobs:
         keys[docs]="docs-$(git-hash-files "README.md" -- )"
         echo "::set-output name=docs::${keys[docs]}"
 
-        keys[say-hi]="say-hi-$(git-hash-files  -- )"
+        keys[say-hi]="say-hi-$RANDOM$RANDOM"
         echo "::set-output name=say-hi::${keys[say-hi]}"
 
         keys[flake8]="flake8-$(git-hash-files "." -- )"
@@ -372,12 +371,6 @@ jobs:
       with:
         path: ''
         key: ${{ steps.generate-keys.outputs.docs }}
-    - name: Check say-hi cache
-      id: check-cache-say-hi
-      uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: ''
-        key: ${{ steps.generate-keys.outputs.say-hi }}
     - name: Check flake8 cache
       id: check-cache-flake8
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -424,8 +417,6 @@ jobs:
       key-build: ${{ steps.generate-keys.outputs.build }}
       key-check-self: ${{ steps.generate-keys.outputs.check-self }}
       needs-build-docs: ${{ steps.check-cache-docs.outputs.cache-hit != 'true' }}
-      needs-build-say-hi: ${{ steps.check-cache-say-hi.outputs.cache-hit != 'true'
-        }}
       needs-build-flake8: ${{ steps.check-cache-flake8.outputs.cache-hit != 'true'
         }}
       needs-build-pyright: ${{ steps.check-cache-pyright.outputs.cache-hit != 'true'

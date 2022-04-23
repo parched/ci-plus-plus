@@ -80,6 +80,28 @@ class _JobDetails:
     force: bool
 
 
+def _get_upstream_inclusive(
+    job_name: str, jobs: Mapping[str, _JobDetails]
+) -> Mapping[str, _JobDetails]:
+    upstream = dict[str, _JobDetails]()
+
+    def add(name: str):
+        if name in upstream:
+            return
+        job = jobs[name]
+        upstream[name] = job
+        for need in job.needs:
+            add(need)
+
+    add(job_name)
+
+    return upstream
+
+
+def _is_implicitly_force(job_name: str, jobs: Mapping[str, _JobDetails]) -> bool:
+    return any(job.force for job in _get_upstream_inclusive(job_name, jobs).values())
+
+
 def _process_job(key: str, job: dict[str, object]) -> _JobDetails:
     paths = to_json_array_of_strings(job.pop("paths", ["./"]), f"jobs.{key}.paths")
 
@@ -103,19 +125,6 @@ def _process_job(key: str, job: dict[str, object]) -> _JobDetails:
     needs = list(needs_orig)
     needs_orig.append(_CIXX_JOB_NAME)
 
-    # TODO: combine with existing "if"
-    job["if"] = " && ".join(
-        [
-            "always()",
-            f"(needs.{_CIXX_JOB_NAME}.result == 'success')",
-            *(
-                f"(needs.{job}.result == 'success' || needs.{job}.result == 'skipped')"
-                for job in needs
-            ),
-            f"(needs.{_CIXX_JOB_NAME}.outputs.{_needs_build_output(key)} == 'true')",
-        ]
-    )
-
     return _JobDetails(
         paths=paths,
         output_paths=output_paths,
@@ -129,6 +138,22 @@ def _insert_extra_steps(
     job_name: str, job: dict[str, object], jobs: Mapping[str, _JobDetails]
 ):
     job_details = jobs[job_name]
+
+    if_conditions = [
+        "always()",
+        f"(needs.{_CIXX_JOB_NAME}.result == 'success')",
+        *(
+            f"(needs.{job}.result == 'success' || needs.{job}.result == 'skipped')"
+            for job in job_details.needs
+        ),
+    ]
+    if not _is_implicitly_force(job_name, jobs):
+        if_conditions.append(
+            f"(needs.{_CIXX_JOB_NAME}.outputs.{_needs_build_output(job_name)}"
+            " == 'true')"
+        )
+
+    job["if"] = " && ".join(if_conditions)
 
     pre_steps = [
         _get_clone_step(job_details.paths),
@@ -240,6 +265,7 @@ def _create_cixx_job(
             **{
                 _needs_build_output(name): _get_cache_check_step_output(name)
                 for name in normal_jobs
+                if not _is_implicitly_force(name, normal_jobs)
             },
         },
     }
@@ -284,12 +310,16 @@ def _get_key_generator_step(jobs: Mapping[str, _JobDetails]) -> dict[str, object
         for need in job.needs:
             add_job(need)
 
-        paths_quoted = " ".join(f'"{normpath(path)}"' for path in job.paths)
-        needs_quoted = " ".join(f'"${{keys[{need}]}}"' for need in job.needs)
+        if _is_implicitly_force(name, jobs):
+            suffix = "$RANDOM$RANDOM"
+        else:
+            paths_quoted = " ".join(f'"{normpath(path)}"' for path in job.paths)
+            needs_quoted = " ".join(f'"${{keys[{need}]}}"' for need in job.needs)
+            suffix = f"$(git-hash-files {paths_quoted} -- {needs_quoted})"
         # TODO: include extra-key
         script = dedent(
             f"""\
-            keys[{name}]="{name}-$(git-hash-files {paths_quoted} -- {needs_quoted})"
+            keys[{name}]="{name}-{suffix}"
             echo "::set-output name={name}::${{keys[{name}]}}"
             """
         )
@@ -363,6 +393,7 @@ def _get_cache_check_steps(jobs: Mapping[str, _JobDetails]) -> list[dict[str, ob
             },
         }
         for name, job in jobs.items()
+        if not _is_implicitly_force(name, jobs)
     ]
 
 
