@@ -32,7 +32,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ needs.cixx.outputs.key-docs }}
     needs:
     - cixx
@@ -63,7 +63,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ needs.cixx.outputs.key-say-hi }}
     needs:
     - cixx
@@ -99,7 +99,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ needs.cixx.outputs.key-flake8 }}
     needs:
     - cixx
@@ -140,7 +140,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ needs.cixx.outputs.key-pyright }}
     needs:
     - cixx
@@ -177,7 +177,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ needs.cixx.outputs.key-pylint }}
     needs:
     - cixx
@@ -214,7 +214,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ needs.cixx.outputs.key-pytest }}
     needs:
     - cixx
@@ -294,7 +294,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ needs.cixx.outputs.key-check-self }}
     if: always() && (needs.cixx.result == 'success') && (needs.build.result == 'success'
       || needs.build.result == 'skipped') && (needs.cixx.outputs.needs-build-check-self
@@ -367,31 +367,31 @@ jobs:
       id: check-cache-docs
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ steps.generate-keys.outputs.docs }}
     - name: Check flake8 cache
       id: check-cache-flake8
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ steps.generate-keys.outputs.flake8 }}
     - name: Check pyright cache
       id: check-cache-pyright
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ steps.generate-keys.outputs.pyright }}
     - name: Check pylint cache
       id: check-cache-pylint
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ steps.generate-keys.outputs.pylint }}
     - name: Check pytest cache
       id: check-cache-pytest
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ steps.generate-keys.outputs.pytest }}
     - name: Check build cache
       id: check-cache-build
@@ -403,7 +403,7 @@ jobs:
       id: check-cache-check-self
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: ''
+        path: __cixx_dummy_path
         key: ${{ steps.generate-keys.outputs.check-self }}
     outputs:
       key-docs: ${{ steps.generate-keys.outputs.docs }}

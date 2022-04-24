@@ -108,6 +108,8 @@ def _process_job(key: str, job: dict[str, object]) -> _JobDetails:
     output_paths = to_json_array_of_strings(
         job.pop("output-paths", []), f"jobs.{key}.output-paths"
     )
+    if not output_paths:
+        output_paths = ["__cixx_dummy_path"]
 
     extra_key = job.pop("extra-key", "")
     if not isinstance(extra_key, str):
