@@ -10,16 +10,19 @@ jobs:
   docs:
     runs-on: ubuntu-20.04
     steps:
-    - id: git-fetch
-      name: Git fetch
+    - name: Git clone
       shell: bash
       run: |
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
         git sparse-checkout init --cone
-        git sparse-checkout set "."
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+        cat <<EOF > .git/info/sparse-checkout
+        /*
+        !/*/
+        EOF
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd
@@ -41,16 +44,6 @@ jobs:
   say-hi:
     runs-on: ubuntu-20.04
     steps:
-    - id: git-fetch
-      name: Git fetch
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-        git sparse-checkout init --cone
-        git sparse-checkout set 
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd
@@ -71,16 +64,15 @@ jobs:
   flake8:
     runs-on: ubuntu-20.04
     steps:
-    - id: git-fetch
-      name: Git fetch
+    - name: Git clone
       shell: bash
       run: |
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
-        git sparse-checkout init --cone
-        git sparse-checkout set "."
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd
@@ -108,16 +100,15 @@ jobs:
   pyright:
     runs-on: ubuntu-20.04
     steps:
-    - id: git-fetch
-      name: Git fetch
+    - name: Git clone
       shell: bash
       run: |
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
-        git sparse-checkout init --cone
-        git sparse-checkout set "."
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd
@@ -149,16 +140,15 @@ jobs:
   pylint:
     runs-on: ubuntu-20.04
     steps:
-    - id: git-fetch
-      name: Git fetch
+    - name: Git clone
       shell: bash
       run: |
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
-        git sparse-checkout init --cone
-        git sparse-checkout set "."
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd
@@ -186,16 +176,15 @@ jobs:
   pytest:
     runs-on: ubuntu-20.04
     steps:
-    - id: git-fetch
-      name: Git fetch
+    - name: Git clone
       shell: bash
       run: |
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
-        git sparse-checkout init --cone
-        git sparse-checkout set "."
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd
@@ -223,16 +212,15 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-    - id: git-fetch
-      name: Git fetch
+    - name: Git clone
       shell: bash
       run: |
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
-        git sparse-checkout init --cone
-        git sparse-checkout set "."
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd
@@ -262,16 +250,23 @@ jobs:
     - build
     - cixx
     steps:
-    - id: git-fetch
-      name: Git fetch
+    - name: Git clone
       shell: bash
       run: |
         git init .
         git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
         git config --local gc.auto 0
         git sparse-checkout init --cone
-        git sparse-checkout set ".ci++" ".github/workflows"
-        git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+        cat <<EOF > .git/info/sparse-checkout
+        /*
+        !/*/
+        /.ci++/
+        /.github/
+        !/.github/*/
+        /.github/workflows/
+        EOF
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
       shell: cmd

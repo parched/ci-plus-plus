@@ -158,7 +158,7 @@ def _insert_extra_steps(
     job["if"] = " && ".join(if_conditions)
 
     pre_steps = [
-        _get_clone_step(job_details.paths),
+        *_get_clone_steps(job_details.paths),
         *_get_zstd_steps(),
         *_get_needs_restore_steps(job_details.needs, jobs),
     ]
@@ -172,28 +172,73 @@ def _insert_extra_steps(
     steps[len(steps) :] = post_steps
 
 
-def _get_clone_step(paths: Sequence[str]) -> dict[str, object]:
-    quoted_dirs = " ".join(f'"{dir}"' for dir in _get_sparse_cone_dirs(paths))
-    return {
-        # TODO: handle self hosted where directory might not be clean
-        # and we want to re-use at least it's git objects
-        "id": "git-fetch",
-        "name": "Git fetch",
-        "shell": "bash",
-        "run": multiline(
-            # pylint: disable-next=consider-using-f-string  # too many braces
-            """\
+def _get_clone_steps(paths: Sequence[str]) -> list[dict[str, object]]:
+    if not paths:
+        return []
+
+    if "./" in paths:
+        sparse_checkout = ""
+    else:
+        patterns = [
+            "/*",
+            "!/*/",
+        ]
+
+        def add_dir(dir_: str, recursive: bool = False):
+            if dir_ in (".", ""):
+                return
+
+            add_dir(dirname(dir_))
+
+            pattern = f"/{dir_}/"
+            anti_pattern = f"!/{dir_}/*/"
+
+            if recursive and anti_pattern in patterns:
+                patterns.remove(anti_pattern)
+            if pattern not in patterns:
+                patterns.append(pattern)
+                if not recursive:
+                    patterns.append(anti_pattern)
+
+        for path in paths:
+            if path.endswith("/"):
+                add_dir(normpath(path), recursive=True)
+            else:
+                add_dir(dirname(normpath(path)))
+
+        sparse_checkout = "\n".join(
+            [
+                "git sparse-checkout init --cone",
+                "cat <<EOF > .git/info/sparse-checkout",
+                *patterns,
+                "EOF",
+            ]
+        )
+    #
+    #    def _get_sparse_cone_dirs(paths: Collection[str]) -> set[str]:
+    #        return {normpath(dirname(path)) for path in paths}
+
+    return [
+        {
+            # TODO: handle self hosted where directory might not be clean
+            # and we want to re-use at least it's git objects
+            "name": "Git clone",
+            "shell": "bash",
+            "run": multiline(
+                # pylint: disable-next=consider-using-f-string  # too many braces
+                """\
 git init .
 git remote add origin \
 "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
 git config --local gc.auto 0
-git sparse-checkout init --cone
-git sparse-checkout set %s
-git -c protocol.version=2 fetch --depth=1 origin ${GITHUB_SHA}
+%s
+git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+git checkout ${GITHUB_SHA}
 """
-            % quoted_dirs
-        ),
-    }
+                % sparse_checkout
+            ),
+        }
+    ]
 
 
 def _get_zstd_steps() -> list[dict[str, object]]:
@@ -394,10 +439,6 @@ def _get_cache_check_steps(jobs: Mapping[str, _JobDetails]) -> list[dict[str, ob
         for name, job in jobs.items()
         if not _is_implicitly_force(name, jobs)
     ]
-
-
-def _get_sparse_cone_dirs(paths: Collection[str]) -> set[str]:
-    return {normpath(dirname(path)) for path in paths}
 
 
 # TODO: config object
