@@ -64,7 +64,7 @@ jobs:
       - run: |
           pip install poetry
           poetry install
-      - run: poetry run pylint .
+      - run: poetry run pylint src tests
 
   pytest:
     runs-on: ubuntu-20.04
