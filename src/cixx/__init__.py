@@ -8,8 +8,14 @@ from posixpath import dirname, normpath
 from textwrap import dedent
 
 import ruamel.yaml
+from ruamel.yaml.representer import RoundTripRepresenter
 
-from ._validation import to_json_array, to_json_array_of_strings, to_json_object
+from ._validation import (
+    to_json_array,
+    to_json_array_of_strings,
+    to_json_object,
+    is_json_array,
+)
 from ._yaml import multiline
 
 __version__ = "0.1.0"
@@ -29,6 +35,14 @@ def main():
 
     yaml = ruamel.yaml.YAML()
 
+    class NonAliasingRTRepresenter(RoundTripRepresenter):
+        """Removes aliases because they're not supported by github"""
+
+        def ignore_aliases(self, data: object):
+            return True
+
+    yaml.Representer = NonAliasingRTRepresenter
+
     input_: object = yaml.load(input_file)  # type: ignore
 
     _process(input_)
@@ -43,6 +57,10 @@ _ACTIONS_CACHE_VERSION = "204c5fc6f17f75fc56021276acb5aa4b6a051d8e"
 
 def _process(input_: object):
     input_ = to_json_object(input_, "top level")
+
+    for key in list(input_):
+        if key.startswith("x-"):
+            del input_[key]
 
     # on = to_json_object(input_["on"], "on")  # pylint: disable=invalid-name
     jobs = to_json_object(input_["jobs"], "jobs")
@@ -170,6 +188,20 @@ def _insert_extra_steps(
 
     steps[0:0] = pre_steps
     steps[len(steps) :] = post_steps
+
+    _flatten_array(steps)  # Allow nested for YAML anchors
+
+
+def _flatten_array(array: list[object]):
+    i = 0
+    while i < len(array):
+        element = array[i]
+        if is_json_array(element):
+            _flatten_array(element)
+            array[i : i + 1] = element
+            i += len(element)
+        else:
+            i += 1
 
 
 def _get_clone_steps(paths: Sequence[str]) -> list[dict[str, object]]:

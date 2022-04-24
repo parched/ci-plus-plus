@@ -1,3 +1,11 @@
+x-poetry-install: &poetry-install
+  - uses: actions/setup-python@v3
+    with:
+      python-version: "3.10"
+  - run: |
+      pip install poetry
+      poetry install
+
 on:
   pull_request:
   push:
@@ -32,23 +40,13 @@ jobs:
   flake8:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-      - run: |
-          pip install poetry
-          poetry install
+      - *poetry-install
       - run: poetry run flake8
 
   pyright:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-      - run: |
-          pip install poetry
-          poetry install
+      - *poetry-install
       - uses: actions/setup-node@v2
         with:
           node-version: "14"
@@ -58,34 +56,19 @@ jobs:
   pylint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-      - run: |
-          pip install poetry
-          poetry install
+      - *poetry-install
       - run: poetry run pylint src tests
 
   pytest:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-      - run: |
-          pip install poetry
-          poetry install
+      - *poetry-install
       - run: poetry run pytest
 
   build:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-      - run: |
-          pip install poetry
-          poetry install
+      - *poetry-install
       - run: poetry build
     output-paths:
       - dist/

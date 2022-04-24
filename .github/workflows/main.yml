@@ -1,6 +1,6 @@
 on:
-  pull_request:
-  push:
+  pull_request: null
+  push: null
 #    targets:
 #      - checks
 #      - docs
@@ -86,6 +86,7 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+
     - run: poetry run flake8
 
     - name: Commit build
@@ -122,6 +123,7 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+
     - uses: actions/setup-node@v2
       with:
         node-version: '14'
@@ -162,6 +164,7 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+
     - run: poetry run pylint src tests
 
     - name: Commit build
@@ -198,6 +201,7 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+
     - run: poetry run pytest
 
     - name: Commit build
@@ -234,6 +238,7 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+
     - run: poetry build
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -286,6 +291,8 @@ jobs:
         pip install cixx --find-links dist/
         ci++ ".ci++/main.yml" ".github/workflows/main.yml.new"
         diff ".github/workflows/main.yml.new" ".github/workflows/main.yml"
+
+
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
