@@ -191,6 +191,12 @@ def _insert_extra_steps(
 
     _flatten_array(steps)  # Allow nested for YAML anchors
 
+    # pylint: disable-next=consider-using-enumerate  # avoid mutate while iterate
+    for i in range(len(steps)):
+        step = steps[i]
+        if isinstance(step, str):
+            steps[i] = {"run": step}
+
 
 def _flatten_array(array: list[object]):
     i = 0

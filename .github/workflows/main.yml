@@ -30,8 +30,9 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
-    - run: echo building docs from readme
+    -
 
+      run: echo building docs from readme
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
@@ -51,8 +52,9 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
-    - run: echo HI
+    -
 
+      run: echo HI
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
@@ -86,9 +88,9 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+    -
 
-    - run: poetry run flake8
-
+      run: poetry run flake8
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
@@ -123,13 +125,13 @@ jobs:
     - run: |
         pip install poetry
         poetry install
-
     - uses: actions/setup-node@v2
       with:
         node-version: '14'
     - run: npm install -g pyright@1.1.234
-    - run: poetry run pyright
+    -
 
+      run: poetry run pyright
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
@@ -164,9 +166,9 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+    -
 
-    - run: poetry run pylint src tests
-
+      run: poetry run pylint src tests
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
@@ -201,9 +203,9 @@ jobs:
     - run: |
         pip install poetry
         poetry install
+    -
 
-    - run: poetry run pytest
-
+      run: poetry run pytest
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
@@ -238,7 +240,6 @@ jobs:
     - run: |
         pip install poetry
         poetry install
-
     - run: poetry build
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -291,8 +292,6 @@ jobs:
         pip install cixx --find-links dist/
         ci++ ".ci++/main.yml" ".github/workflows/main.yml.new"
         diff ".github/workflows/main.yml.new" ".github/workflows/main.yml"
-
-
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
