@@ -64,3 +64,20 @@ def to_json_array_of_strings(obj: object, location: str) -> list[str]:
             )
 
     return array  # type: ignore
+
+
+def to_string(obj: object, location: str) -> str:
+    """Checks if an object is a JSON string
+    Args:
+        obj: the object to check
+        location: location of the object to use in exception message
+    Returns:
+        the same object
+    Raises:
+        TypeError: if it's not a JSON string
+    """
+    if isinstance(obj, str):
+        return obj
+    raise TypeError(
+        f"Expected a string at '{location}' but found {obj.__class__.__name__}"
+    )

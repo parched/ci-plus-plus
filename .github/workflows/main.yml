@@ -1,305 +1,7 @@
 on:
   pull_request: null
   push: null
-#    targets:
-#      - checks
-#      - docs
-#      - say-hi
-
 jobs:
-  docs:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Git clone
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-        git sparse-checkout init --cone
-        cat <<EOF > .git/info/sparse-checkout
-        /*
-        !/*/
-        EOF
-        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
-        git checkout ${GITHUB_SHA}
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    -
-
-      run: echo building docs from readme
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-docs }}
-    needs:
-    - cixx
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-docs
-      == 'true')
-  say-hi:
-    runs-on: ubuntu-20.04
-    steps:
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    -
-
-      run: echo HI
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-say-hi }}
-    needs:
-    - cixx
-    if: always() && (needs.cixx.result == 'success')
-  flake8:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Git clone
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-
-        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
-        git checkout ${GITHUB_SHA}
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.10'
-    - run: |
-        pip install poetry
-        poetry install
-    -
-
-      run: poetry run flake8
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-flake8 }}
-    needs:
-    - cixx
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-flake8
-      == 'true')
-  pyright:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Git clone
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-
-        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
-        git checkout ${GITHUB_SHA}
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.10'
-    - run: |
-        pip install poetry
-        poetry install
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-    - run: npm install -g pyright@1.1.234
-    -
-
-      run: poetry run pyright
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-pyright }}
-    needs:
-    - cixx
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pyright
-      == 'true')
-  pylint:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Git clone
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-
-        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
-        git checkout ${GITHUB_SHA}
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.10'
-    - run: |
-        pip install poetry
-        poetry install
-    -
-
-      run: poetry run pylint src tests
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-pylint }}
-    needs:
-    - cixx
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pylint
-      == 'true')
-  pytest:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Git clone
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-
-        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
-        git checkout ${GITHUB_SHA}
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.10'
-    - run: |
-        pip install poetry
-        poetry install
-    -
-
-      run: poetry run pytest
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-pytest }}
-    needs:
-    - cixx
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pytest
-      == 'true')
-  build:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Git clone
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-
-        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
-        git checkout ${GITHUB_SHA}
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.10'
-    - run: |
-        pip install poetry
-        poetry install
-    - run: poetry build
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: dist/
-        key: ${{ needs.cixx.outputs.key-build }}
-    needs:
-    - cixx
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-build
-      == 'true')
-  check-self:
-    runs-on: ubuntu-20.04
-    needs:
-    - build
-    - cixx
-    steps:
-    - name: Git clone
-      shell: bash
-      run: |
-        git init .
-        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
-        git config --local gc.auto 0
-        git sparse-checkout init --cone
-        cat <<EOF > .git/info/sparse-checkout
-        /*
-        !/*/
-        /.ci++/
-        /.github/
-        !/.github/*/
-        /.github/workflows/
-        EOF
-        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
-        git checkout ${GITHUB_SHA}
-    - if: runner.os == 'Windows'
-      name: Use GNU tar instead BSD tar
-      shell: cmd
-      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
-    - name: Check zstd on PATH
-      shell: bash
-      run: which zstd
-    - name: Restore build
-      uses: martijnhols/actions-cache/restore@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: dist/
-        key: ${{ needs.cixx.outputs.key-build }}
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.10'
-    - run: |
-        pip install cixx --find-links dist/
-        ci++ ".ci++/main.yml" ".github/workflows/main.yml.new"
-        diff ".github/workflows/main.yml.new" ".github/workflows/main.yml"
-    - name: Commit build
-      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
-      with:
-        path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-check-self }}
-    if: always() && (needs.cixx.result == 'success') && (needs.build.result == 'success'
-      || needs.build.result == 'skipped') && (needs.cixx.outputs.needs-build-check-self
-      == 'true')
   cixx:
     runs-on: ubuntu-20.04
     steps:
@@ -427,3 +129,284 @@ jobs:
       needs-build-build: ${{ steps.check-cache-build.outputs.cache-hit != 'true' }}
       needs-build-check-self: ${{ steps.check-cache-check-self.outputs.cache-hit !=
         'true' }}
+  docs:
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-docs
+      == 'true')
+    needs:
+    - cixx
+    steps:
+    - name: Git clone
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        cat <<EOF > .git/info/sparse-checkout
+        /*
+        !/*/
+        EOF
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - run: echo building docs from readme
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: __cixx_dummy_path
+        key: ${{ needs.cixx.outputs.key-docs }}
+    runs-on: ubuntu-20.04
+  say-hi:
+    if: always() && (needs.cixx.result == 'success')
+    needs:
+    - cixx
+    steps:
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - run: echo HI
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: __cixx_dummy_path
+        key: ${{ needs.cixx.outputs.key-say-hi }}
+    runs-on: ubuntu-20.04
+  flake8:
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-flake8
+      == 'true')
+    needs:
+    - cixx
+    steps:
+    - name: Git clone
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry run flake8
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: __cixx_dummy_path
+        key: ${{ needs.cixx.outputs.key-flake8 }}
+    runs-on: ubuntu-20.04
+  pyright:
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pyright
+      == 'true')
+    needs:
+    - cixx
+    steps:
+    - name: Git clone
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - run: npm install -g pyright@1.1.234
+    - run: poetry run pyright
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: __cixx_dummy_path
+        key: ${{ needs.cixx.outputs.key-pyright }}
+    runs-on: ubuntu-20.04
+  pylint:
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pylint
+      == 'true')
+    needs:
+    - cixx
+    steps:
+    - name: Git clone
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry run pylint src tests
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: __cixx_dummy_path
+        key: ${{ needs.cixx.outputs.key-pylint }}
+    runs-on: ubuntu-20.04
+  pytest:
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pytest
+      == 'true')
+    needs:
+    - cixx
+    steps:
+    - name: Git clone
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry run pytest
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: __cixx_dummy_path
+        key: ${{ needs.cixx.outputs.key-pytest }}
+    runs-on: ubuntu-20.04
+  build:
+    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-build
+      == 'true')
+    needs:
+    - cixx
+    steps:
+    - name: Git clone
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install poetry
+        poetry install
+    - run: poetry build
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: dist/
+        key: ${{ needs.cixx.outputs.key-build }}
+    runs-on: ubuntu-20.04
+  check-self:
+    if: always() && (needs.cixx.result == 'success') && (needs.build.result == 'success'
+      || needs.build.result == 'skipped') && (needs.cixx.outputs.needs-build-check-self
+      == 'true')
+    needs:
+    - cixx
+    - build
+    steps:
+    - name: Git clone
+      shell: bash
+      run: |
+        git init .
+        git remote add origin "https://x-access-token:${{secrets.GITHUB_TOKEN}}@github.com/${GITHUB_REPOSITORY}.git"
+        git config --local gc.auto 0
+        git sparse-checkout init --cone
+        cat <<EOF > .git/info/sparse-checkout
+        /*
+        !/*/
+        /.ci++/
+        /.github/
+        !/.github/*/
+        /.github/workflows/
+        EOF
+        git -c protocol.version=2 fetch --no-tags --depth=1 origin ${GITHUB_SHA}
+        git checkout ${GITHUB_SHA}
+    - if: runner.os == 'Windows'
+      name: Use GNU tar instead BSD tar
+      shell: cmd
+      run: echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+    - name: Check zstd on PATH
+      shell: bash
+      run: which zstd
+    - name: Restore build
+      uses: martijnhols/actions-cache/restore@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: dist/
+        key: ${{ needs.cixx.outputs.key-build }}
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - run: |
+        pip install cixx --find-links dist/
+        ci++ ".ci++/main.yml" ".github/workflows/main.yml.new"
+        diff ".github/workflows/main.yml.new" ".github/workflows/main.yml"
+    - name: Commit build
+      uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
+      with:
+        path: __cixx_dummy_path
+        key: ${{ needs.cixx.outputs.key-check-self }}
+    runs-on: ubuntu-20.04

@@ -10,11 +10,13 @@ from textwrap import dedent
 import ruamel.yaml
 from ruamel.yaml.representer import RoundTripRepresenter
 
+from . import _github_actions as gh
 from ._validation import (
+    is_json_array,
     to_json_array,
     to_json_array_of_strings,
     to_json_object,
-    is_json_array,
+    to_string,
 )
 from ._yaml import multiline
 
@@ -45,24 +47,24 @@ def main():
 
     input_: object = yaml.load(input_file)  # type: ignore
 
-    _process(input_)
+    output = _process(input_)
 
     output_file.parent.mkdir(exist_ok=True, parents=True)
-    yaml.dump(input_, output_file)  # type: ignore
+    yaml.dump(output, output_file)  # type: ignore
 
 
 _CIXX_JOB_NAME = "cixx"
 _ACTIONS_CACHE_VERSION = "204c5fc6f17f75fc56021276acb5aa4b6a051d8e"
 
 
-def _process(input_: object):
+def _process(input_: object) -> gh.Workflow:
     input_ = to_json_object(input_, "top level")
 
     for key in list(input_):
         if key.startswith("x-"):
             del input_[key]
 
-    # on = to_json_object(input_["on"], "on")  # pylint: disable=invalid-name
+    on = to_json_object(input_["on"], "on")  # pylint: disable=invalid-name
     jobs = to_json_object(input_["jobs"], "jobs")
 
     targets = {}
@@ -81,12 +83,22 @@ def _process(input_: object):
             normal_job_details[job_key] = _process_job(job_key, job)
             normal_jobs[job_key] = job
         else:
-            psuedo_jobs[job_key] = jobs.pop(job_key)
+            psuedo_jobs[job_key] = job
 
-    jobs[_CIXX_JOB_NAME] = _create_cixx_job(targets, normal_job_details, psuedo_jobs)
+    on_out = on
 
-    for job_name, job in normal_jobs.items():
-        _insert_extra_steps(job_name, job, normal_job_details)
+    jobs_out = {
+        _CIXX_JOB_NAME: _create_cixx_job(targets, normal_job_details, psuedo_jobs),
+        **{
+            job_name: _create_job(job_name, job, normal_job_details)
+            for job_name, job in normal_jobs.items()
+        },
+    }
+
+    return {
+        "on": on_out,
+        "jobs": jobs_out,
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,29 +133,23 @@ def _is_implicitly_force(job_name: str, jobs: Mapping[str, _JobDetails]) -> bool
 
 
 def _process_job(key: str, job: dict[str, object]) -> _JobDetails:
-    paths = to_json_array_of_strings(job.pop("paths", ["./"]), f"jobs.{key}.paths")
+    paths = to_json_array_of_strings(job.get("paths", ["./"]), f"jobs.{key}.paths")
 
     output_paths = to_json_array_of_strings(
-        job.pop("output-paths", []), f"jobs.{key}.output-paths"
+        job.get("output-paths", []), f"jobs.{key}.output-paths"
     )
     if not output_paths:
         output_paths = ["__cixx_dummy_path"]
 
-    extra_key = job.pop("extra-key", "")
+    extra_key = job.get("extra-key", "")
     if not isinstance(extra_key, str):
         raise TypeError(f"jobs.{key}.extra-key")
 
-    force = job.pop("force", False)
+    force = job.get("force", False)
     if not isinstance(force, bool):
         raise TypeError(f"jobs.{key}.force")
 
-    if "needs" not in job:
-        job["needs"] = []
-
-    needs_orig = to_json_array_of_strings(job["needs"], f"jobs.{key}.needs")
-
-    needs = list(needs_orig)
-    needs_orig.append(_CIXX_JOB_NAME)
+    needs = to_json_array_of_strings(job.get("needs", []), f"jobs.{key}.needs")
 
     return _JobDetails(
         paths=paths,
@@ -154,9 +160,9 @@ def _process_job(key: str, job: dict[str, object]) -> _JobDetails:
     )
 
 
-def _insert_extra_steps(
+def _create_job(
     job_name: str, job: dict[str, object], jobs: Mapping[str, _JobDetails]
-):
+) -> gh.Job:
     job_details = jobs[job_name]
 
     if_conditions = [
@@ -173,7 +179,9 @@ def _insert_extra_steps(
             " == 'true')"
         )
 
-    job["if"] = " && ".join(if_conditions)
+    if_out = " && ".join(if_conditions)
+
+    needs_out = [_CIXX_JOB_NAME, *job_details.needs]
 
     pre_steps = [
         *_get_clone_steps(job_details.paths),
@@ -186,28 +194,33 @@ def _insert_extra_steps(
 
     steps = to_json_array(job["steps"], f"jobs.{job_name}.steps")
 
-    steps[0:0] = pre_steps
-    steps[len(steps) :] = post_steps
+    steps_flattend = _flatten_array(steps)  # Allow nested for YAML anchors
 
-    _flatten_array(steps)  # Allow nested for YAML anchors
+    steps_out = [
+        *pre_steps,
+        *(
+            dict[str, object](run=step)
+            if isinstance(step, str)
+            else to_json_object(step, f"jobs.{job_name}.steps[{i}]")
+            for i, step in enumerate(steps_flattend)
+        ),
+        *post_steps,
+    ]
 
-    # pylint: disable-next=consider-using-enumerate  # avoid mutate while iterate
-    for i in range(len(steps)):
-        step = steps[i]
-        if isinstance(step, str):
-            steps[i] = {"run": step}
+    return {
+        "if": if_out,
+        "needs": needs_out,
+        "steps": steps_out,
+        "runs-on": to_string(job["runs-on"], f"jobs.{job_name}.runs-on"),
+    }
 
 
-def _flatten_array(array: list[object]):
-    i = 0
-    while i < len(array):
-        element = array[i]
-        if is_json_array(element):
-            _flatten_array(element)
-            array[i : i + 1] = element
-            i += len(element)
-        else:
-            i += 1
+def _flatten_array(array: list[object]) -> list[object]:
+    return [
+        f
+        for element in array
+        for f in (_flatten_array(element) if is_json_array(element) else [element])
+    ]
 
 
 def _get_clone_steps(paths: Sequence[str]) -> list[dict[str, object]]:
@@ -337,7 +350,7 @@ def _needs_build_output(job_name: str) -> str:
 
 def _create_cixx_job(
     _targets: object, normal_jobs: Mapping[str, _JobDetails], _psuedo_jobs: object
-) -> dict[str, object]:
+) -> gh.Job:
     return {
         "runs-on": "ubuntu-20.04",
         "steps": [
