@@ -2,7 +2,7 @@ on:
   pull_request: null
   push: null
 jobs:
-  cixx:
+  cixx-init:
     runs-on: ubuntu-20.04
     steps:
     - id: git-fetch
@@ -130,10 +130,10 @@ jobs:
       needs-build-check-self: ${{ steps.check-cache-check-self.outputs.cache-hit !=
         'true' }}
   docs:
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-docs
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-docs
       == 'true')
     needs:
-    - cixx
+    - cixx-init
     steps:
     - name: Git clone
       shell: bash
@@ -160,12 +160,12 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-docs }}
+        key: ${{ needs.cixx-init.outputs.key-docs }}
     runs-on: ubuntu-20.04
   say-hi:
-    if: always() && (needs.cixx.result == 'success')
+    if: always() && (needs.cixx-init.result == 'success')
     needs:
-    - cixx
+    - cixx-init
     steps:
     - if: runner.os == 'Windows'
       name: Use GNU tar instead BSD tar
@@ -179,13 +179,13 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-say-hi }}
+        key: ${{ needs.cixx-init.outputs.key-say-hi }}
     runs-on: ubuntu-20.04
   flake8:
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-flake8
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-flake8
       == 'true')
     needs:
-    - cixx
+    - cixx-init
     steps:
     - name: Git clone
       shell: bash
@@ -214,13 +214,13 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-flake8 }}
+        key: ${{ needs.cixx-init.outputs.key-flake8 }}
     runs-on: ubuntu-20.04
   pyright:
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pyright
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-pyright
       == 'true')
     needs:
-    - cixx
+    - cixx-init
     steps:
     - name: Git clone
       shell: bash
@@ -253,13 +253,13 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-pyright }}
+        key: ${{ needs.cixx-init.outputs.key-pyright }}
     runs-on: ubuntu-20.04
   pylint:
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pylint
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-pylint
       == 'true')
     needs:
-    - cixx
+    - cixx-init
     steps:
     - name: Git clone
       shell: bash
@@ -288,13 +288,13 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-pylint }}
+        key: ${{ needs.cixx-init.outputs.key-pylint }}
     runs-on: ubuntu-20.04
   pytest:
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-pytest
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-pytest
       == 'true')
     needs:
-    - cixx
+    - cixx-init
     steps:
     - name: Git clone
       shell: bash
@@ -323,13 +323,13 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-pytest }}
+        key: ${{ needs.cixx-init.outputs.key-pytest }}
     runs-on: ubuntu-20.04
   build:
-    if: always() && (needs.cixx.result == 'success') && (needs.cixx.outputs.needs-build-build
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-build
       == 'true')
     needs:
-    - cixx
+    - cixx-init
     steps:
     - name: Git clone
       shell: bash
@@ -358,14 +358,14 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: dist/
-        key: ${{ needs.cixx.outputs.key-build }}
+        key: ${{ needs.cixx-init.outputs.key-build }}
     runs-on: ubuntu-20.04
   check-self:
-    if: always() && (needs.cixx.result == 'success') && (needs.build.result == 'success'
-      || needs.build.result == 'skipped') && (needs.cixx.outputs.needs-build-check-self
+    if: always() && (needs.cixx-init.result == 'success') && (needs.build.result ==
+      'success' || needs.build.result == 'skipped') && (needs.cixx-init.outputs.needs-build-check-self
       == 'true')
     needs:
-    - cixx
+    - cixx-init
     - build
     steps:
     - name: Git clone
@@ -396,7 +396,7 @@ jobs:
       uses: martijnhols/actions-cache/restore@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: dist/
-        key: ${{ needs.cixx.outputs.key-build }}
+        key: ${{ needs.cixx-init.outputs.key-build }}
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
@@ -408,5 +408,5 @@ jobs:
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
         path: __cixx_dummy_path
-        key: ${{ needs.cixx.outputs.key-check-self }}
+        key: ${{ needs.cixx-init.outputs.key-check-self }}
     runs-on: ubuntu-20.04
