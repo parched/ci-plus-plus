@@ -9,6 +9,8 @@ x-poetry-install: &poetry-install
 on:
   pull_request:
   push:
+    branches:
+      - main
 #    targets:
 #      - checks
 #      - docs

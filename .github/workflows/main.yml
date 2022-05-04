@@ -1,6 +1,13 @@
 on:
   pull_request: null
-  push: null
+  push:
+    branches:
+    - main
+#    targets:
+#      - checks
+#      - docs
+#      - say-hi
+
 jobs:
   cixx-init:
     runs-on: ubuntu-20.04
