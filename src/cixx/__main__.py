@@ -7,7 +7,7 @@ from ruamel.yaml.representer import RoundTripRepresenter
 from . import _github_actions as gh
 from . import _init_job as init_job
 from . import _normal_job as normal_job
-from ._common import INIT_JOB_ID, JobDetails
+from ._common import INIT_JOB_ID, outputs_file, JobDetails
 from ._validation import to_json_array_of_strings, to_json_object
 
 
@@ -88,11 +88,10 @@ def _process(input_: object) -> gh.Workflow:
 def _process_job(key: str, job: dict[str, object]) -> JobDetails:
     paths = to_json_array_of_strings(job.get("paths", ["./"]), f"jobs.{key}.paths")
 
-    output_paths = to_json_array_of_strings(
+    output_paths_raw = to_json_array_of_strings(
         job.get("output-paths", []), f"jobs.{key}.output-paths"
     )
-    if not output_paths:
-        output_paths = ["__cixx_dummy_path"]
+    output_paths = [*output_paths_raw, outputs_file(key)]
 
     extra_key = job.get("extra-key", "")
     if not isinstance(extra_key, str):

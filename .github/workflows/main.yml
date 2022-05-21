@@ -77,43 +77,43 @@ jobs:
       id: check-cache-docs
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_docs.json
         key: ${{ steps.generate-keys.outputs.docs }}
     - name: Check flake8 cache
       id: check-cache-flake8
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_flake8.json
         key: ${{ steps.generate-keys.outputs.flake8 }}
     - name: Check pyright cache
       id: check-cache-pyright
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_pyright.json
         key: ${{ steps.generate-keys.outputs.pyright }}
     - name: Check pylint cache
       id: check-cache-pylint
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_pylint.json
         key: ${{ steps.generate-keys.outputs.pylint }}
     - name: Check pytest cache
       id: check-cache-pytest
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_pytest.json
         key: ${{ steps.generate-keys.outputs.pytest }}
     - name: Check build cache
       id: check-cache-build
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: dist/
+        path: "dist/\n__cixx_outputs_build.json"
         key: ${{ steps.generate-keys.outputs.build }}
     - name: Check check-self cache
       id: check-cache-check-self
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_check-self.json
         key: ${{ steps.generate-keys.outputs.check-self }}
     outputs:
       key-docs: ${{ steps.generate-keys.outputs.docs }}
@@ -162,11 +162,15 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |
     - run: echo building docs from readme
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_docs.json
         key: ${{ needs.cixx-init.outputs.key-docs }}
     runs-on: ubuntu-20.04
   say-hi:
@@ -181,11 +185,15 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |
     - run: echo HI
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_say-hi.json
         key: ${{ needs.cixx-init.outputs.key-say-hi }}
     runs-on: ubuntu-20.04
   flake8:
@@ -210,6 +218,10 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
@@ -220,7 +232,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_flake8.json
         key: ${{ needs.cixx-init.outputs.key-flake8 }}
     runs-on: ubuntu-20.04
   pyright:
@@ -245,6 +257,10 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
@@ -259,7 +275,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_pyright.json
         key: ${{ needs.cixx-init.outputs.key-pyright }}
     runs-on: ubuntu-20.04
   pylint:
@@ -284,6 +300,10 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
@@ -294,7 +314,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_pylint.json
         key: ${{ needs.cixx-init.outputs.key-pylint }}
     runs-on: ubuntu-20.04
   pytest:
@@ -319,6 +339,10 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
@@ -329,7 +353,7 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_pytest.json
         key: ${{ needs.cixx-init.outputs.key-pytest }}
     runs-on: ubuntu-20.04
   build:
@@ -354,6 +378,10 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
@@ -361,10 +389,19 @@ jobs:
         pip install poetry
         poetry install
     - run: poetry build
+    - id: timestamp
+      run: echo "::set-output name=timestamp::$(date)"
+    - name: Save outputs
+      shell: bash
+      run: |
+        cd $GITHUB_WORKSPACE
+        cat <<EOF > __cixx_outputs_build.json
+        {"timestamp":${{toJson(steps.timestamp.outputs.timestamp)}}}
+        EOF
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: dist/
+        path: "dist/\n__cixx_outputs_build.json"
         key: ${{ needs.cixx-init.outputs.key-build }}
     runs-on: ubuntu-20.04
   check-self:
@@ -402,8 +439,16 @@ jobs:
     - name: Restore build
       uses: martijnhols/actions-cache/restore@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: dist/
+        path: "dist/\n__cixx_outputs_build.json"
         key: ${{ needs.cixx-init.outputs.key-build }}
+    - name: Read outputs
+      id: cixx-outputs
+      shell: bash
+      run: |-
+        output=$(sed -e s/%/%25/g -e s/\r/%0D/g -e s/\n/%0A/g __cixx_outputs_build.json)
+        echo "::set-output name=build::$output"
+    - run: echo "Built at ${{ fromJSON(steps.cixx-outputs.outputs.build).timestamp
+        }}"
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
@@ -414,6 +459,6 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_dummy_path
+        path: __cixx_outputs_check-self.json
         key: ${{ needs.cixx-init.outputs.key-check-self }}
     runs-on: ubuntu-20.04

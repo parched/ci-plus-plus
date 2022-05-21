@@ -4,7 +4,6 @@ from collections.abc import Mapping
 from posixpath import normpath
 from textwrap import dedent
 
-
 from . import _github_actions as gh
 from ._common import (
     ACTIONS_CACHE_VERSION,

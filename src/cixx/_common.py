@@ -3,10 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-
 INIT_JOB_ID = "cixx-init"
 
 ACTIONS_CACHE_VERSION = "204c5fc6f17f75fc56021276acb5aa4b6a051d8e"
+
+
+def outputs_file(job_name: str) -> str:
+    """Return the filename for the job outputs"""
+    return f"__cixx_outputs_{job_name}.json"
 
 
 @dataclass(frozen=True, slots=True)

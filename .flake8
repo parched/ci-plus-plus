@@ -8,5 +8,7 @@ ignore =
     E203,
     # Now goes against PEP8 (and conflicts with W504)
     W503
+    # Leave line length to black
+    E501
 # darglint - https://github.com/terrencepreilly/darglint#strictness-configuration
 strictness = long

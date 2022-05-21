@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+import json
+from collections.abc import Collection, Mapping, Sequence
 from posixpath import dirname, normpath
-from typing import cast
+from typing import TypeVar, cast
 
 from . import _github_actions as gh
 from ._common import (
@@ -12,7 +13,9 @@ from ._common import (
     is_implicitly_force,
     key_output,
     needs_build_output,
+    outputs_file,
 )
+from ._expressions import replace_identiers_in_template_str, template_str_to_json
 from ._validation import is_json_array, to_json_array, to_json_object, to_string
 from ._yaml import multiline
 
@@ -31,7 +34,8 @@ def create(
             for job in job_details.needs
         ),
     ]
-    if not is_implicitly_force(job_name, jobs):
+    is_implicitly_force_ = is_implicitly_force(job_name, jobs)
+    if not is_implicitly_force_:
         if_conditions.append(
             f"(needs.{INIT_JOB_ID}.outputs.{needs_build_output(job_name)}" " == 'true')"
         )
@@ -44,14 +48,31 @@ def create(
         *_get_clone_steps(job_details.paths),
         *_get_zstd_steps(),
         *_get_needs_restore_steps(job_details.needs, jobs),
+        _get_needs_outputs_step(job_details.needs, jobs),
     ]
-    post_steps = [
-        _get_commit_step(job_name, job_details.output_paths),
-    ]
+
+    post_steps = list[gh.Step]()
+    if job_details.outputs is not None:
+        post_steps.append(
+            _get_outputs_step(job_name, job_details.outputs),
+        )
+    if job_details.output_paths or not is_implicitly_force_:
+        post_steps.append(_get_commit_step(job_name, job_details.output_paths))
 
     steps = to_json_array(job["steps"], f"jobs.{job_name}.steps")
 
     steps_flattend = _flatten_array(steps)  # Allow nested for YAML anchors
+
+    replacements = [
+        (
+            f"needs.{need}.outputs",
+            f"fromJSON(steps.{_OUTPUTS_STEP_ID}.outputs.{need})"
+            if jobs[need].outputs is not None
+            else "null",
+        )
+        for need in job_details.needs
+    ]
+    steps_corrected = _replace_identiers(steps_flattend, replacements)
 
     steps_out = [
         *pre_steps,
@@ -59,7 +80,7 @@ def create(
             gh.Step(run=step) if isinstance(step, str)
             # TODO: validate step
             else cast(gh.Step, to_json_object(step, f"jobs.{job_name}.steps[{i}]"))
-            for i, step in enumerate(steps_flattend)
+            for i, step in enumerate(steps_corrected)
         ),
         *post_steps,
     ]
@@ -169,6 +190,9 @@ def _get_zstd_steps() -> list[gh.Step]:
     ]
 
 
+_OUTPUTS_STEP_ID = "cixx-outputs"
+
+
 def _get_needs_restore_steps(
     needs: Sequence[str], jobs: Mapping[str, JobDetails]
 ) -> list[gh.Step]:
@@ -186,6 +210,25 @@ def _get_needs_restore_steps(
     ]
 
 
+def _get_needs_outputs_step(
+    needs: Sequence[str], jobs: Mapping[str, JobDetails]
+) -> gh.Step:
+    run = list[str]()
+    for need in needs:
+        if jobs[need].outputs is not None:
+            # See https://github.com/actions/toolkit/blob/f0b00fd201c7ddf14e1572a10d5fb4577c4bd6a2/packages/core/src/command.ts#L80
+            run.append(
+                f"output=$(sed -e s/%/%25/g -e s/\\r/%0D/g -e s/\\n/%0A/g {outputs_file(need)})"
+            )
+            run.append(f'echo "::set-output name={need}::$output"')
+    return {
+        "name": "Read outputs",
+        "id": _OUTPUTS_STEP_ID,
+        "shell": "bash",
+        "run": multiline("\n".join(run)),
+    }
+
+
 def _get_commit_step(job_name: str, output_paths: Sequence[str]) -> gh.Step:
     return {
         "name": "Commit build",
@@ -195,3 +238,60 @@ def _get_commit_step(job_name: str, output_paths: Sequence[str]) -> gh.Step:
             "key": "${{ " f"needs.{INIT_JOB_ID}.outputs.{key_output(job_name)}" " }}",
         },
     }
+
+
+def _get_outputs_step(job_name: str, outputs: object) -> gh.Step:
+    return {
+        "name": "Save outputs",
+        "shell": "bash",
+        "run": multiline(
+            f"""\
+            cd $GITHUB_WORKSPACE
+            cat <<EOF > {outputs_file(job_name)}
+            {_to_json_template(outputs)}
+            EOF
+            """
+        ),
+    }
+
+
+def _to_json_template(obj: object) -> str:
+    match obj:
+        case str():
+            return template_str_to_json(obj)
+        case dict():
+            obj_ = cast(dict[str, object], obj)
+            pairs = (f"{json.dumps(k)}:{_to_json_template(v)}" for k, v in obj_.items())
+            return f"{{{','.join(pairs)}}}"
+        case list():
+            obj_ = cast(list[object], obj)
+            return f"[{','.join(_to_json_template(e) for e in obj_)}]"
+        case float() | int() | bool() | None:
+            return json.dumps(obj)
+        case _:
+            raise TypeError("Unsupported JSON type")
+
+
+T = TypeVar("T")
+
+
+def _replace_identiers(obj: T, replacements: Collection[tuple[str, str]]) -> T:
+    match obj:
+        case str():
+            return replace_identiers_in_template_str(obj, replacements)
+        case dict():
+            obj_ = cast(dict[str, object], obj)
+            new = {k: _replace_identiers(v, replacements) for k, v in obj_.items()}
+            if all(a is b for a, b in zip(new.values(), obj_.values())):
+                return obj_  # type: ignore
+            return new  # type: ignore
+        case list():
+            obj_ = cast(list[object], obj)
+            new = [_replace_identiers(element, replacements) for element in obj_]
+            if all(a is b for a, b in zip(new, obj_)):
+                return obj_  # type: ignore
+            return new  # type: ignore
+        case float() | int() | bool() | None:
+            return obj  # type: ignore
+        case _:
+            raise TypeError("Unsupported JSON type")
