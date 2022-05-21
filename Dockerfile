@@ -22,7 +22,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
   && rm -rf /var/lib/apt/lists/*
   
 # Poetry
-ENV PEOTRY_VERSION=1.2.0b1
+ENV POETRY_VERSION=1.2.0b1
 ENV POETRY_HOME=/opt/poetry
 ENV PATH=${PATH}:${POETRY_HOME}/bin
 RUN curl -sSL https://install.python-poetry.org | python${PYTHON_VERSION} - \
