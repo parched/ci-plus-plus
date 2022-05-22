@@ -8,14 +8,20 @@ authors = ["James Duley <jagduley@gmail.com>"]
 python = "^3.10"
 "ruamel.yaml" = "^0.17.21"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.1"
+[tool.poetry.group.dev.dependencies]
 black = "^22.1.0"
+isort = "^5.10.1"
+
+[tool.poetry.group.flake8.dependencies]
 flake8 = "^4.0.1"
 flake8-black = "^0.3.2"
-isort = "^5.10.1"
 flake8-bugbear = "^22.1.11"
 darglint = "^1.8.1"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.1"
+
+[tool.poetry.group.pylint.dependencies]
 pylint = "^2.13.5"
 
 [build-system]

@@ -226,8 +226,8 @@ jobs:
       with:
         python-version: '3.10'
     - run: |
-        pip install poetry
-        poetry install
+        pip install poetry==1.2.0b1
+    - run: poetry install --no-root --only flake8
     - run: poetry run flake8
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -265,12 +265,12 @@ jobs:
       with:
         python-version: '3.10'
     - run: |
-        pip install poetry
-        poetry install
+        pip install poetry==1.2.0b1
     - uses: actions/setup-node@v2
       with:
         node-version: '14'
     - run: npm install -g pyright@1.1.234
+    - run: poetry install
     - run: poetry run pyright
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -308,8 +308,8 @@ jobs:
       with:
         python-version: '3.10'
     - run: |
-        pip install poetry
-        poetry install
+        pip install poetry==1.2.0b1
+    - run: poetry install
     - run: poetry run pylint src tests
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -347,8 +347,8 @@ jobs:
       with:
         python-version: '3.10'
     - run: |
-        pip install poetry
-        poetry install
+        pip install poetry==1.2.0b1
+    - run: poetry install
     - run: poetry run pytest
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -386,8 +386,7 @@ jobs:
       with:
         python-version: '3.10'
     - run: |
-        pip install poetry
-        poetry install
+        pip install poetry==1.2.0b1
     - run: poetry build
     - id: timestamp
       run: echo "::set-output name=timestamp::$(date)"

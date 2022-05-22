@@ -1,10 +1,10 @@
+# TODO: get these versions from the DOckerfile
 x-poetry-install: &poetry-install
   - uses: actions/setup-python@v3
     with:
       python-version: "3.10"
   - |
-    pip install poetry
-    poetry install
+    pip install poetry==1.2.0b1
 
 on:
   pull_request:
@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - *poetry-install
+      - poetry install --no-root --only flake8
       - poetry run flake8
 
   pyright:
@@ -53,18 +54,24 @@ jobs:
         with:
           node-version: "14"
       - npm install -g pyright@1.1.234
+      # NOTE: add extra args when poetry is upgraded
+      - poetry install #--only main,test
       - poetry run pyright
 
   pylint:
     runs-on: ubuntu-20.04
     steps:
       - *poetry-install
+      # NOTE: add extra args when poetry is upgraded
+      - poetry install #--only main,test,pylint
       - poetry run pylint src tests
 
   pytest:
     runs-on: ubuntu-20.04
     steps:
       - *poetry-install
+      # NOTE: add extra args when poetry is upgraded
+      - poetry install #--only main,test
       - poetry run pytest
 
   build:
