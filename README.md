@@ -9,7 +9,7 @@
 - [ ] Target driven (pull instead of push)
 - [ ] Clean up jobs
 - [ ] Config object
-- [ ] Resuable workflows or similar
+- [x] Resuable workflows or similar
 - [ ] Submodules
 - [ ] LFS
 - [ ] Self hosted runner

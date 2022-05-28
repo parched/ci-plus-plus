@@ -8,11 +8,14 @@ def is_json_object(obj: object) -> TypeGuard[dict[str, object]]:
 
 def to_json_object(obj: object, location: str) -> dict[str, object]:
     """Checks if an object is a JSON object (YAML associative array)
+
     Args:
         obj: the object to check
         location: location of the object to use in exception message
+
     Returns:
         the same object
+
     Raises:
         TypeError: if it's not a JSON object
     """
@@ -30,11 +33,14 @@ def is_json_array(obj: object) -> TypeGuard[list[object]]:
 
 def to_json_array(obj: object, location: str) -> list[object]:
     """Checks if an object is a JSON array
+
     Args:
         obj: the object to check
         location: location of the object to use in exception message
+
     Returns:
         the same object
+
     Raises:
         TypeError: if it's not a JSON array
     """
@@ -47,11 +53,14 @@ def to_json_array(obj: object, location: str) -> list[object]:
 
 def to_json_array_of_strings(obj: object, location: str) -> list[str]:
     """Checks if an object is a JSON array or strings
+
     Args:
         obj: the object to check
         location: location of the object to use in exception message
+
     Returns:
         the same object
+
     Raises:
         TypeError: if it's not a JSON array of strings
     """
@@ -68,11 +77,14 @@ def to_json_array_of_strings(obj: object, location: str) -> list[str]:
 
 def to_string(obj: object, location: str) -> str:
     """Checks if an object is a JSON string
+
     Args:
         obj: the object to check
         location: location of the object to use in exception message
+
     Returns:
         the same object
+
     Raises:
         TypeError: if it's not a JSON string
     """

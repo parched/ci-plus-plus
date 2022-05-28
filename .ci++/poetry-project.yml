@@ -1,0 +1,61 @@
+# TODO: get these versions from the Dockerfile
+x-poetry-install: &poetry-install
+  - uses: actions/setup-python@v3
+    with:
+      python-version: ${{ inputs.python-version }}
+  - |
+    pip install poetry==1.2.0b1
+
+on:
+  cixx_call:
+    # TODO: inputs schema
+    outputs:
+      build: ${{ jobs.build }}
+
+jobs:
+  flake8:
+    runs-on: ubuntu-20.04
+    steps:
+      - *poetry-install
+      - poetry install --no-root --only flake8
+      - poetry run flake8
+
+  pyright:
+    runs-on: ubuntu-20.04
+    steps:
+      - *poetry-install
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+      - npm install -g pyright@1.1.234
+      # NOTE: add extra args when poetry is upgraded
+      - poetry install #--only main,test
+      - poetry run pyright
+
+  pylint:
+    runs-on: ubuntu-20.04
+    steps:
+      - *poetry-install
+      # NOTE: add extra args when poetry is upgraded
+      - poetry install #--only main,test,pylint
+      - poetry run pylint src tests
+
+  pytest:
+    runs-on: ubuntu-20.04
+    steps:
+      - *poetry-install
+      # NOTE: add extra args when poetry is upgraded
+      - poetry install #--only main,test
+      - poetry run pytest
+
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - *poetry-install
+      - poetry build
+      - id: timestamp
+        run: echo "::set-output name=timestamp::$(date)"
+    output-paths:
+      - dist/
+    outputs:
+      timestamp: ${{steps.timestamp.outputs.timestamp}}

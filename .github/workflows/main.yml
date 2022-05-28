@@ -53,25 +53,25 @@ jobs:
         keys[say-hi]="say-hi-$RANDOM$RANDOM"
         echo "::set-output name=say-hi::${keys[say-hi]}"
 
-        keys[flake8]="flake8-$(git_hash_files "." -- )"
-        echo "::set-output name=flake8::${keys[flake8]}"
+        keys[poetry-flake8]="poetry-flake8-$(git_hash_files "." -- )"
+        echo "::set-output name=poetry-flake8::${keys[poetry-flake8]}"
 
-        keys[pyright]="pyright-$(git_hash_files "." -- )"
-        echo "::set-output name=pyright::${keys[pyright]}"
+        keys[poetry-pyright]="poetry-pyright-$(git_hash_files "." -- )"
+        echo "::set-output name=poetry-pyright::${keys[poetry-pyright]}"
 
-        keys[pylint]="pylint-$(git_hash_files "." -- )"
-        echo "::set-output name=pylint::${keys[pylint]}"
+        keys[poetry-pylint]="poetry-pylint-$(git_hash_files "." -- )"
+        echo "::set-output name=poetry-pylint::${keys[poetry-pylint]}"
 
-        keys[pytest]="pytest-$(git_hash_files "." -- )"
-        echo "::set-output name=pytest::${keys[pytest]}"
+        keys[poetry-pytest]="poetry-pytest-$(git_hash_files "." -- )"
+        echo "::set-output name=poetry-pytest::${keys[poetry-pytest]}"
 
-        keys[build]="build-$(git_hash_files "." -- )"
-        echo "::set-output name=build::${keys[build]}"
+        keys[poetry-build]="poetry-build-$(git_hash_files "." -- )"
+        echo "::set-output name=poetry-build::${keys[poetry-build]}"
 
-        keys[build]="build-$(git_hash_files "." -- )"
-        echo "::set-output name=build::${keys[build]}"
+        keys[poetry-build]="poetry-build-$(git_hash_files "." -- )"
+        echo "::set-output name=poetry-build::${keys[poetry-build]}"
 
-        keys[check-self]="check-self-$(git_hash_files ".ci++" ".github/workflows" -- "${keys[build]}")"
+        keys[check-self]="check-self-$(git_hash_files ".ci++" ".github/workflows" -- "${keys[poetry-build]}")"
         echo "::set-output name=check-self::${keys[check-self]}"
     - name: Check docs cache
       id: check-cache-docs
@@ -79,36 +79,36 @@ jobs:
       with:
         path: __cixx_outputs_docs.json
         key: ${{ steps.generate-keys.outputs.docs }}
-    - name: Check flake8 cache
-      id: check-cache-flake8
+    - name: Check poetry-flake8 cache
+      id: check-cache-poetry-flake8
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_flake8.json
-        key: ${{ steps.generate-keys.outputs.flake8 }}
-    - name: Check pyright cache
-      id: check-cache-pyright
+        path: __cixx_outputs_poetry-flake8.json
+        key: ${{ steps.generate-keys.outputs.poetry-flake8 }}
+    - name: Check poetry-pyright cache
+      id: check-cache-poetry-pyright
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_pyright.json
-        key: ${{ steps.generate-keys.outputs.pyright }}
-    - name: Check pylint cache
-      id: check-cache-pylint
+        path: __cixx_outputs_poetry-pyright.json
+        key: ${{ steps.generate-keys.outputs.poetry-pyright }}
+    - name: Check poetry-pylint cache
+      id: check-cache-poetry-pylint
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_pylint.json
-        key: ${{ steps.generate-keys.outputs.pylint }}
-    - name: Check pytest cache
-      id: check-cache-pytest
+        path: __cixx_outputs_poetry-pylint.json
+        key: ${{ steps.generate-keys.outputs.poetry-pylint }}
+    - name: Check poetry-pytest cache
+      id: check-cache-poetry-pytest
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_pytest.json
-        key: ${{ steps.generate-keys.outputs.pytest }}
-    - name: Check build cache
-      id: check-cache-build
+        path: __cixx_outputs_poetry-pytest.json
+        key: ${{ steps.generate-keys.outputs.poetry-pytest }}
+    - name: Check poetry-build cache
+      id: check-cache-poetry-build
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: "dist/\n__cixx_outputs_build.json"
-        key: ${{ steps.generate-keys.outputs.build }}
+        path: "dist/\n__cixx_outputs_poetry-build.json"
+        key: ${{ steps.generate-keys.outputs.poetry-build }}
     - name: Check check-self cache
       id: check-cache-check-self
       uses: martijnhols/actions-cache/check@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
@@ -118,22 +118,23 @@ jobs:
     outputs:
       key-docs: ${{ steps.generate-keys.outputs.docs }}
       key-say-hi: ${{ steps.generate-keys.outputs.say-hi }}
-      key-flake8: ${{ steps.generate-keys.outputs.flake8 }}
-      key-pyright: ${{ steps.generate-keys.outputs.pyright }}
-      key-pylint: ${{ steps.generate-keys.outputs.pylint }}
-      key-pytest: ${{ steps.generate-keys.outputs.pytest }}
-      key-build: ${{ steps.generate-keys.outputs.build }}
+      key-poetry-flake8: ${{ steps.generate-keys.outputs.poetry-flake8 }}
+      key-poetry-pyright: ${{ steps.generate-keys.outputs.poetry-pyright }}
+      key-poetry-pylint: ${{ steps.generate-keys.outputs.poetry-pylint }}
+      key-poetry-pytest: ${{ steps.generate-keys.outputs.poetry-pytest }}
+      key-poetry-build: ${{ steps.generate-keys.outputs.poetry-build }}
       key-check-self: ${{ steps.generate-keys.outputs.check-self }}
       needs-build-docs: ${{ steps.check-cache-docs.outputs.cache-hit != 'true' }}
-      needs-build-flake8: ${{ steps.check-cache-flake8.outputs.cache-hit != 'true'
-        }}
-      needs-build-pyright: ${{ steps.check-cache-pyright.outputs.cache-hit != 'true'
-        }}
-      needs-build-pylint: ${{ steps.check-cache-pylint.outputs.cache-hit != 'true'
-        }}
-      needs-build-pytest: ${{ steps.check-cache-pytest.outputs.cache-hit != 'true'
-        }}
-      needs-build-build: ${{ steps.check-cache-build.outputs.cache-hit != 'true' }}
+      needs-build-poetry-flake8: ${{ steps.check-cache-poetry-flake8.outputs.cache-hit
+        != 'true' }}
+      needs-build-poetry-pyright: ${{ steps.check-cache-poetry-pyright.outputs.cache-hit
+        != 'true' }}
+      needs-build-poetry-pylint: ${{ steps.check-cache-poetry-pylint.outputs.cache-hit
+        != 'true' }}
+      needs-build-poetry-pytest: ${{ steps.check-cache-poetry-pytest.outputs.cache-hit
+        != 'true' }}
+      needs-build-poetry-build: ${{ steps.check-cache-poetry-build.outputs.cache-hit
+        != 'true' }}
       needs-build-check-self: ${{ steps.check-cache-check-self.outputs.cache-hit !=
         'true' }}
   docs:
@@ -196,8 +197,8 @@ jobs:
         path: __cixx_outputs_say-hi.json
         key: ${{ needs.cixx-init.outputs.key-say-hi }}
     runs-on: ubuntu-20.04
-  flake8:
-    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-flake8
+  poetry-flake8:
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-poetry-flake8
       == 'true')
     needs:
     - cixx-init
@@ -232,11 +233,11 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_flake8.json
-        key: ${{ needs.cixx-init.outputs.key-flake8 }}
+        path: __cixx_outputs_poetry-flake8.json
+        key: ${{ needs.cixx-init.outputs.key-poetry-flake8 }}
     runs-on: ubuntu-20.04
-  pyright:
-    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-pyright
+  poetry-pyright:
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-poetry-pyright
       == 'true')
     needs:
     - cixx-init
@@ -275,11 +276,11 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_pyright.json
-        key: ${{ needs.cixx-init.outputs.key-pyright }}
+        path: __cixx_outputs_poetry-pyright.json
+        key: ${{ needs.cixx-init.outputs.key-poetry-pyright }}
     runs-on: ubuntu-20.04
-  pylint:
-    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-pylint
+  poetry-pylint:
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-poetry-pylint
       == 'true')
     needs:
     - cixx-init
@@ -314,11 +315,11 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_pylint.json
-        key: ${{ needs.cixx-init.outputs.key-pylint }}
+        path: __cixx_outputs_poetry-pylint.json
+        key: ${{ needs.cixx-init.outputs.key-poetry-pylint }}
     runs-on: ubuntu-20.04
-  pytest:
-    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-pytest
+  poetry-pytest:
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-poetry-pytest
       == 'true')
     needs:
     - cixx-init
@@ -353,11 +354,11 @@ jobs:
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: __cixx_outputs_pytest.json
-        key: ${{ needs.cixx-init.outputs.key-pytest }}
+        path: __cixx_outputs_poetry-pytest.json
+        key: ${{ needs.cixx-init.outputs.key-poetry-pytest }}
     runs-on: ubuntu-20.04
-  build:
-    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-build
+  poetry-build:
+    if: always() && (needs.cixx-init.result == 'success') && (needs.cixx-init.outputs.needs-build-poetry-build
       == 'true')
     needs:
     - cixx-init
@@ -394,22 +395,22 @@ jobs:
       shell: bash
       run: |
         cd $GITHUB_WORKSPACE
-        cat <<EOF > __cixx_outputs_build.json
+        cat <<EOF > __cixx_outputs_poetry-build.json
         {"timestamp":${{toJson(steps.timestamp.outputs.timestamp)}}}
         EOF
     - name: Commit build
       uses: martijnhols/actions-cache/save@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: "dist/\n__cixx_outputs_build.json"
-        key: ${{ needs.cixx-init.outputs.key-build }}
+        path: "dist/\n__cixx_outputs_poetry-build.json"
+        key: ${{ needs.cixx-init.outputs.key-poetry-build }}
     runs-on: ubuntu-20.04
   check-self:
-    if: always() && (needs.cixx-init.result == 'success') && (needs.build.result ==
-      'success' || needs.build.result == 'skipped') && (needs.cixx-init.outputs.needs-build-check-self
+    if: always() && (needs.cixx-init.result == 'success') && (needs.poetry-build.result
+      == 'success' || needs.poetry-build.result == 'skipped') && (needs.cixx-init.outputs.needs-build-check-self
       == 'true')
     needs:
     - cixx-init
-    - build
+    - poetry-build
     steps:
     - name: Git clone
       shell: bash
@@ -435,22 +436,23 @@ jobs:
     - name: Check zstd on PATH
       shell: bash
       run: which zstd
-    - name: Restore build
+    - name: Restore poetry-build
       uses: martijnhols/actions-cache/restore@204c5fc6f17f75fc56021276acb5aa4b6a051d8e
       with:
-        path: "dist/\n__cixx_outputs_build.json"
-        key: ${{ needs.cixx-init.outputs.key-build }}
+        path: "dist/\n__cixx_outputs_poetry-build.json"
+        key: ${{ needs.cixx-init.outputs.key-poetry-build }}
     - name: Read outputs
       id: cixx-outputs
       shell: bash
       run: |-
-        output=$(sed -e s/%/%25/g -e s/\r/%0D/g -e s/\n/%0A/g __cixx_outputs_build.json)
-        echo "::set-output name=build::$output"
-    - run: echo "Built at ${{ fromJSON(steps.cixx-outputs.outputs.build).timestamp
+        output=$(sed -e s/%/%25/g -e s/\r/%0D/g -e s/\n/%0A/g __cixx_outputs_poetry-build.json)
+        echo "::set-output name=poetry-build::$output"
+    - run: echo "Built at ${{ fromJSON(steps.cixx-outputs.outputs.poetry-build).timestamp
         }}"
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
+
     - run: |
         pip install cixx --find-links dist/
         ci++ ".ci++/main.yml" ".github/workflows/main.yml.new"

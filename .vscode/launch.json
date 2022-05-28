@@ -11,6 +11,14 @@
             "module": "cixx",
             "args": [".ci++/main.yml", ".github/workflows/main.yml"],
             "justMyCode": false,
+        },
+        {
+            "name": "Self -E",
+            "type": "python",
+            "request": "launch",
+            "module": "cixx",
+            "args": ["--preprocess-only", ".ci++/main.yml"],
+            "justMyCode": false,
         }
     ]
 }

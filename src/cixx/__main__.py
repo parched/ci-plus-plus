@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import argparse
+import sys
 from pathlib import Path
 
 import ruamel.yaml
@@ -7,12 +10,13 @@ from ruamel.yaml.representer import RoundTripRepresenter
 from . import _github_actions as gh
 from . import _init_job as init_job
 from . import _normal_job as normal_job
-from ._common import INIT_JOB_ID, outputs_file, JobDetails
-from ._validation import to_json_array_of_strings, to_json_object
+from ._common import INIT_JOB_ID, JobDetails, outputs_file
+from ._reuseable_workflow import expand_cixx_uses, replace_jobs_references
 from ._transform import (
     flatten_nested_steps_and_expand_implicit_run,
     remove_x_properties,
 )
+from ._validation import to_json_array_of_strings, to_json_object
 
 
 def main():
@@ -20,12 +24,38 @@ def main():
 
     parser = argparse.ArgumentParser(description="Compile to GitHub Actions workflow.")
     parser.add_argument("input_file", help="Input CI++ YAML file")
-    parser.add_argument("output_file", help="GitHub Actions workflow YAML file")
+    parser.add_argument(
+        "output_file",
+        nargs="?",
+        help="GitHub Actions workflow YAML file, default stdout",
+    )
+    parser.add_argument(
+        "--preprocess-only",
+        "-E",
+        action="store_true",
+        help="Only expand YAML references, cixx-uses, nested steps, run strings",
+    )
 
     args = parser.parse_args()
 
     input_file = Path(args.input_file)
-    output_file = Path(args.output_file)
+    input_ = expand_cixx_uses(input_file)
+
+    input_ = remove_x_properties(input_)
+    input_ = flatten_nested_steps_and_expand_implicit_run(input_)
+
+    input_ = replace_jobs_references(input_)
+
+    if args.preprocess_only:
+        output = input_
+    else:
+        output = _process(input_)
+
+    if args.output_file:
+        output_file = Path(args.output_file)
+        output_file.parent.mkdir(exist_ok=True, parents=True)
+    else:
+        output_file = sys.stdout
 
     yaml = ruamel.yaml.YAML()
 
@@ -35,18 +65,11 @@ def main():
         def ignore_aliases(self, data: object):
             return True
 
+        def represent_scalar(self, tag, value, style=None, anchor=None):  # type: ignore
+            return super().represent_scalar(tag, value, style)  # type: ignore
+
     yaml.Representer = NonAliasingRTRepresenter
 
-    input_: object = yaml.load(input_file)  # type: ignore
-
-    # TODO: add cmdline flag for just this as it keep GHA input compatibilty
-    # but adds useful DRY features
-    input_ = remove_x_properties(input_)
-    input_ = flatten_nested_steps_and_expand_implicit_run(input_)
-
-    output = _process(input_)
-
-    output_file.parent.mkdir(exist_ok=True, parents=True)
     yaml.dump(output, output_file)  # type: ignore
 
 

@@ -1,11 +1,3 @@
-# TODO: get these versions from the DOckerfile
-x-poetry-install: &poetry-install
-  - uses: actions/setup-python@v3
-    with:
-      python-version: "3.10"
-  - |
-    pip install poetry==1.2.0b1
-
 on:
   pull_request:
   push:
@@ -16,13 +8,15 @@ on:
 #      - docs
 #      - say-hi
 
+x-python-version: &python-version "3.10"
+
 jobs:
-  checks:
-    needs:
-      - flake8
-      - pylint
-      - pytest
-      - pyright
+  #checks:
+  #  needs:
+  #    - flake8
+  #    - pylint
+  #    - pytest
+  #    - pyright
 
   docs:
     paths:
@@ -39,52 +33,11 @@ jobs:
     steps:
       - echo HI
 
-  flake8:
-    runs-on: ubuntu-20.04
-    steps:
-      - *poetry-install
-      - poetry install --no-root --only flake8
-      - poetry run flake8
-
-  pyright:
-    runs-on: ubuntu-20.04
-    steps:
-      - *poetry-install
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "14"
-      - npm install -g pyright@1.1.234
-      # NOTE: add extra args when poetry is upgraded
-      - poetry install #--only main,test
-      - poetry run pyright
-
-  pylint:
-    runs-on: ubuntu-20.04
-    steps:
-      - *poetry-install
-      # NOTE: add extra args when poetry is upgraded
-      - poetry install #--only main,test,pylint
-      - poetry run pylint src tests
-
-  pytest:
-    runs-on: ubuntu-20.04
-    steps:
-      - *poetry-install
-      # NOTE: add extra args when poetry is upgraded
-      - poetry install #--only main,test
-      - poetry run pytest
-
-  build:
-    runs-on: ubuntu-20.04
-    steps:
-      - *poetry-install
-      - poetry build
-      - id: timestamp
-        run: echo "::set-output name=timestamp::$(date)"
-    output-paths:
-      - dist/
-    outputs:
-      timestamp: ${{steps.timestamp.outputs.timestamp}}
+  poetry:
+    cixx-uses: ./poetry-project.yml
+    with:
+      python-version: *python-version
+      path: ./
 
   check-self:
     runs-on: ubuntu-20.04
@@ -92,12 +45,12 @@ jobs:
       - .ci++/
       - .github/workflows/
     needs:
-      - build
+      - ${{ jobs.poetry.outputs.build }}
     steps:
-      - echo "Built at ${{ needs.build.outputs.timestamp }}"
+      - echo "Built at ${{ jobs.poetry.outputs.build.outputs.timestamp }}"
       - uses: actions/setup-python@v3
         with:
-          python-version: "3.10"
+          python-version: *python-version
       - |
         pip install cixx --find-links dist/
         ci++ ".ci++/main.yml" ".github/workflows/main.yml.new"

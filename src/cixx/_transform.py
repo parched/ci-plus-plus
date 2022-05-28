@@ -20,7 +20,7 @@ def flatten_nested_steps_and_expand_implicit_run(workflow: object) -> dict[str, 
     jobs = to_json_object(input_["jobs"], "jobs")
     new_jobs = dict[str, object]()
 
-    for job_key in jobs:  # copy before modify
+    for job_key in jobs:
         job = to_json_object(jobs[job_key], f"jobs.{job_key}")
         steps = job.get("steps")
         if steps:

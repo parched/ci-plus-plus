@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import json
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from posixpath import dirname, normpath
-from typing import TypeVar, cast
+from typing import cast
 
 from . import _github_actions as gh
 from ._common import (
@@ -15,7 +14,7 @@ from ._common import (
     needs_build_output,
     outputs_file,
 )
-from ._expressions import replace_identiers_in_template_str, template_str_to_json
+from ._expressions import replace_identifiers, to_json_template
 from ._validation import to_json_array, to_json_object, to_string
 from ._yaml import multiline
 
@@ -70,7 +69,7 @@ def create(
         )
         for need in job_details.needs
     ]
-    steps_corrected = _replace_identiers(steps, replacements)
+    steps_corrected = replace_identifiers(steps, replacements)
 
     steps_out = [
         *pre_steps,
@@ -237,50 +236,8 @@ def _get_outputs_step(job_name: str, outputs: object) -> gh.Step:
             f"""\
             cd $GITHUB_WORKSPACE
             cat <<EOF > {outputs_file(job_name)}
-            {_to_json_template(outputs)}
+            {to_json_template(outputs)}
             EOF
             """
         ),
     }
-
-
-def _to_json_template(obj: object) -> str:
-    match obj:
-        case str():
-            return template_str_to_json(obj)
-        case dict():
-            obj_ = cast(dict[str, object], obj)
-            pairs = (f"{json.dumps(k)}:{_to_json_template(v)}" for k, v in obj_.items())
-            return f"{{{','.join(pairs)}}}"
-        case list():
-            obj_ = cast(list[object], obj)
-            return f"[{','.join(_to_json_template(e) for e in obj_)}]"
-        case float() | int() | bool() | None:
-            return json.dumps(obj)
-        case _:
-            raise TypeError("Unsupported JSON type")
-
-
-T = TypeVar("T")
-
-
-def _replace_identiers(obj: T, replacements: Collection[tuple[str, str]]) -> T:
-    match obj:
-        case str():
-            return replace_identiers_in_template_str(obj, replacements)
-        case dict():
-            obj_ = cast(dict[str, object], obj)
-            new = {k: _replace_identiers(v, replacements) for k, v in obj_.items()}
-            if all(a is b for a, b in zip(new.values(), obj_.values())):
-                return obj_  # type: ignore
-            return new  # type: ignore
-        case list():
-            obj_ = cast(list[object], obj)
-            new = [_replace_identiers(element, replacements) for element in obj_]
-            if all(a is b for a, b in zip(new, obj_)):
-                return obj_  # type: ignore
-            return new  # type: ignore
-        case float() | int() | bool() | None:
-            return obj  # type: ignore
-        case _:
-            raise TypeError("Unsupported JSON type")
