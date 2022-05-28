@@ -9,6 +9,10 @@ from . import _init_job as init_job
 from . import _normal_job as normal_job
 from ._common import INIT_JOB_ID, outputs_file, JobDetails
 from ._validation import to_json_array_of_strings, to_json_object
+from ._transform import (
+    flatten_nested_steps_and_expand_implicit_run,
+    remove_x_properties,
+)
 
 
 def main():
@@ -35,6 +39,11 @@ def main():
 
     input_: object = yaml.load(input_file)  # type: ignore
 
+    # TODO: add cmdline flag for just this as it keep GHA input compatibilty
+    # but adds useful DRY features
+    input_ = remove_x_properties(input_)
+    input_ = flatten_nested_steps_and_expand_implicit_run(input_)
+
     output = _process(input_)
 
     output_file.parent.mkdir(exist_ok=True, parents=True)
@@ -43,10 +52,6 @@ def main():
 
 def _process(input_: object) -> gh.Workflow:
     input_ = to_json_object(input_, "top level")
-
-    for key in list(input_):
-        if key.startswith("x-"):
-            del input_[key]
 
     on = to_json_object(input_["on"], "on")  # pylint: disable=invalid-name
     jobs = to_json_object(input_["jobs"], "jobs")

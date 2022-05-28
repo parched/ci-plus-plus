@@ -16,7 +16,7 @@ from ._common import (
     outputs_file,
 )
 from ._expressions import replace_identiers_in_template_str, template_str_to_json
-from ._validation import is_json_array, to_json_array, to_json_object, to_string
+from ._validation import to_json_array, to_json_object, to_string
 from ._yaml import multiline
 
 
@@ -61,8 +61,6 @@ def create(
 
     steps = to_json_array(job["steps"], f"jobs.{job_name}.steps")
 
-    steps_flattend = _flatten_array(steps)  # Allow nested for YAML anchors
-
     replacements = [
         (
             f"needs.{need}.outputs",
@@ -72,14 +70,13 @@ def create(
         )
         for need in job_details.needs
     ]
-    steps_corrected = _replace_identiers(steps_flattend, replacements)
+    steps_corrected = _replace_identiers(steps, replacements)
 
     steps_out = [
         *pre_steps,
         *(
-            gh.Step(run=step) if isinstance(step, str)
             # TODO: validate step
-            else cast(gh.Step, to_json_object(step, f"jobs.{job_name}.steps[{i}]"))
+            cast(gh.Step, to_json_object(step, f"jobs.{job_name}.steps[{i}]"))
             for i, step in enumerate(steps_corrected)
         ),
         *post_steps,
@@ -91,14 +88,6 @@ def create(
         "steps": steps_out,
         "runs-on": to_string(job["runs-on"], f"jobs.{job_name}.runs-on"),
     }
-
-
-def _flatten_array(array: list[object]) -> list[object]:
-    return [
-        f
-        for element in array
-        for f in (_flatten_array(element) if is_json_array(element) else [element])
-    ]
 
 
 def _get_clone_steps(paths: Sequence[str]) -> list[gh.Step]:
