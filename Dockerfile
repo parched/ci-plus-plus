@@ -9,17 +9,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   xz-utils \
   && rm -rf /var/lib/apt/lists/*
 
-# # Make the default match non-root users
-# ENV TAR_OPTIONS --no-same-owner
-# 
-# # Python
-# ARG PYTHON_VERSION=3.10
+# Make the default match non-root users
+ENV TAR_OPTIONS --no-same-owner
+
+# Python
+ARG PYTHON_VERSION=3.10
 # RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 #   software-properties-common \
 #   && add-apt-repository -y ppa:deadsnakes/ppa \
 #   && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 #   python${PYTHON_VERSION}-full \
 #   && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  python${PYTHON_VERSION}-full \
+  && rm -rf /var/lib/apt/lists/*
 #   
 # # Poetry
 # ENV POETRY_VERSION=1.2.0b1
