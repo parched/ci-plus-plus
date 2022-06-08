@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 from typing import TypeGuard
 
+Json = int | float | bool | str | None | list["Json"] | dict[str, "Json"]
 
-def is_json_object(obj: object) -> TypeGuard[dict[str, object]]:
+
+def is_json_object(obj: Json) -> TypeGuard[dict[str, Json]]:
     """Checks if an object is a JSON object (YAML associative array)"""
     return isinstance(obj, dict)
 
 
-def to_json_object(obj: object, location: str) -> dict[str, object]:
+def to_json_object(obj: Json, location: str) -> dict[str, Json]:
     """Checks if an object is a JSON object (YAML associative array)
 
     Args:
@@ -26,12 +30,12 @@ def to_json_object(obj: object, location: str) -> dict[str, object]:
     )
 
 
-def is_json_array(obj: object) -> TypeGuard[list[object]]:
+def is_json_array(obj: Json) -> TypeGuard[list[Json]]:
     """Checks if an object is a JSON array"""
     return isinstance(obj, list)
 
 
-def to_json_array(obj: object, location: str) -> list[object]:
+def to_json_array(obj: Json, location: str) -> list[Json]:
     """Checks if an object is a JSON array
 
     Args:
@@ -51,7 +55,7 @@ def to_json_array(obj: object, location: str) -> list[object]:
     )
 
 
-def to_json_array_of_strings(obj: object, location: str) -> list[str]:
+def to_json_array_of_strings(obj: Json, location: str) -> list[str]:
     """Checks if an object is a JSON array or strings
 
     Args:
@@ -75,7 +79,7 @@ def to_json_array_of_strings(obj: object, location: str) -> list[str]:
     return array  # type: ignore
 
 
-def to_string(obj: object, location: str) -> str:
+def to_string(obj: Json, location: str) -> str:
     """Checks if an object is a JSON string
 
     Args:

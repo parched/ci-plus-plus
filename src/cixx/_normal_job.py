@@ -15,12 +15,12 @@ from ._common import (
     outputs_file,
 )
 from ._expressions import replace_identifiers, to_json_template
-from ._validation import to_json_array, to_json_object, to_string
+from ._validation import Json, to_json_array, to_json_object, to_string
 from ._yaml import multiline
 
 
 def create(
-    job_name: str, job: dict[str, object], jobs: Mapping[str, JobDetails]
+    job_name: str, job: dict[str, Json], jobs: Mapping[str, JobDetails]
 ) -> gh.Job:
     """Returns a tranformed job"""
     job_details = jobs[job_name]
@@ -228,7 +228,7 @@ def _get_commit_step(job_name: str, output_paths: Sequence[str]) -> gh.Step:
     }
 
 
-def _get_outputs_step(job_name: str, outputs: object) -> gh.Step:
+def _get_outputs_step(job_name: str, outputs: Json) -> gh.Step:
     return {
         "name": "Save outputs",
         "shell": "bash",

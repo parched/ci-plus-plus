@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import TypedDict
+from ._validation import Json
 
-_Dict = dict[str, object]
+_Dict = dict[str, Json]
 
 
 class Workflow(TypedDict):

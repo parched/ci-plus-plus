@@ -16,7 +16,7 @@ from ._transform import (
     flatten_nested_steps_and_expand_implicit_run,
     remove_x_properties,
 )
-from ._validation import to_json_array_of_strings, to_json_object
+from ._validation import Json, to_json_array_of_strings, to_json_object
 
 
 def main():
@@ -73,7 +73,7 @@ def main():
     yaml.dump(output, output_file)  # type: ignore
 
 
-def _process(input_: object) -> gh.Workflow:
+def _process(input_: Json) -> gh.Workflow:
     input_ = to_json_object(input_, "top level")
 
     on = to_json_object(input_["on"], "on")  # pylint: disable=invalid-name
@@ -87,7 +87,7 @@ def _process(input_: object) -> gh.Workflow:
 
     psuedo_jobs = {}
     normal_job_details = dict[str, JobDetails]()
-    normal_jobs = dict[str, dict[str, object]]()
+    normal_jobs = dict[str, dict[str, Json]]()
 
     for job_key in list(jobs):  # copy before modify
         job = to_json_object(jobs[job_key], f"jobs.{job_key}")
@@ -113,7 +113,7 @@ def _process(input_: object) -> gh.Workflow:
     }
 
 
-def _process_job(key: str, job: dict[str, object]) -> JobDetails:
+def _process_job(key: str, job: dict[str, Json]) -> JobDetails:
     paths = to_json_array_of_strings(job.get("paths", ["./"]), f"jobs.{key}.paths")
 
     output_paths_raw = to_json_array_of_strings(

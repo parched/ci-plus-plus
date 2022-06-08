@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, TypeVar, cast
+from typing import Callable, TypeVar
 
 import ruamel.yaml
 
@@ -9,25 +9,23 @@ from ._expressions import (
     replace_identifiers,
     to_expression,
 )
-from ._validation import to_json_array_of_strings, to_json_object, to_string
-
-_T = TypeVar("_T")
+from ._validation import Json, to_json_array_of_strings, to_json_object, to_string
 
 
 # pylint: disable-next=too-many-locals  # should refactor this at some stage
-def expand_cixx_uses(input_file: Path) -> dict[str, object]:
+def expand_cixx_uses(input_file: Path) -> dict[str, Json]:
     """Return the workflow with any cixx-uses expanded.
 
     Nested steps are useful when using YAML references
     """
     yaml = ruamel.yaml.YAML()
 
-    input_object: object = yaml.load(input_file)  # type: ignore
+    input_object: Json = yaml.load(input_file)  # type: ignore
     input_ = to_json_object(input_object, f"{input_file}")
 
     jobs = to_json_object(input_["jobs"], f"{input_file}:jobs")
-    new_jobs = dict[str, object]()
-    job_outputs = dict[str, object]()
+    new_jobs = dict[str, Json]()
+    job_outputs = dict[str, Json]()
 
     for job_key in jobs:
         job = to_json_object(jobs[job_key], f"{input_file}:jobs.{job_key}")
@@ -45,7 +43,7 @@ def expand_cixx_uses(input_file: Path) -> dict[str, object]:
             while any(key.startswith(prefix) for key in jobs):
                 prefix += "-"  # Make sure it's impossible to conflict
 
-            child_fixed = replace_identifiers(
+            child_fixed: dict[str, Json] = replace_identifiers(
                 replace_full_expressions(
                     _add_job_prefix(child, prefix),
                     _get_full_expression_replacements("inputs", inputs),
@@ -80,15 +78,14 @@ def expand_cixx_uses(input_file: Path) -> dict[str, object]:
             f"{context}.{job}.outputs", outputs
         )
     ]
-    return replace_identifiers(
-        replace_full_expressions(
-            {**input_, "jobs": new_jobs}, outputs_full_replacements
-        ),
-        outputs_replacements,
+    with_new_jobs: dict[str, Json] = {**input_, "jobs": new_jobs}
+    with_full_outputs_replacements: dict[str, Json] = replace_full_expressions(
+        with_new_jobs, outputs_full_replacements
     )
+    return replace_identifiers(with_full_outputs_replacements, outputs_replacements)
 
 
-def _add_job_prefix(workflow: object, prefix: str) -> dict[str, object]:
+def _add_job_prefix(workflow: Json, prefix: str) -> dict[str, Json]:
     input_ = to_json_object(workflow, "top level")
 
     jobs = to_json_object(input_["jobs"], "jobs")
@@ -99,72 +96,70 @@ def _add_job_prefix(workflow: object, prefix: str) -> dict[str, object]:
         for job in jobs
         for context in ("needs", "jobs")
     ]
-    return replace_identifiers({**input_, "jobs": new_jobs}, replacements)
+    with_new_jobs: dict[str, Json] = {**input_, "jobs": new_jobs}
+    return replace_identifiers(with_new_jobs, replacements)
+
+
+_TJson1 = TypeVar("_TJson1", bound=Json)
+_TJson2 = TypeVar("_TJson2", bound=Json)
 
 
 def _get_replacements(
-    name: str, obj: object, replacer: Callable[[object], _T]
-) -> list[tuple[str, _T]]:
+    name: str, obj: Json, replacer: Callable[[_TJson2], _TJson1]
+) -> list[tuple[str, _TJson1]]:
     """Return the replacements with as much as can be expanded first"""
-    replacements = list[tuple[str, _T]]()
+    replacements = list[tuple[str, _TJson1]]()
     match obj:
         case str():
             pass
         case float() | int() | bool() | None:
             pass
         case list():
-            obj_ = cast(list[object], obj)
             replacements.extend(
                 (
                     replacement
-                    for i, value in enumerate(obj_)
+                    for i, value in enumerate(obj)
                     for replacement in _get_replacements(
                         f"{name}[{i}]", value, replacer
                     )
                 )
             )
         case dict():
-            obj_ = cast(dict[str, object], obj)
             replacements.extend(
                 (
                     replacement
-                    for key, value in obj_.items()
+                    for key, value in obj.items()
                     for replacement in _get_replacements(
                         f"{name}.{key}", value, replacer
                     )
                 )
             )
-        case _:
-            raise TypeError("Unsupported JSON type")
 
-    replacement = replacer(obj)  # pyright: ignore [reportUnknownArgumentType]
-    # https://github.com/microsoft/pyright/issues/3552
+    replacement = replacer(obj)
     replacements.append((name, replacement))
     return replacements
 
 
-def _get_expression_replacements(name: str, obj: object) -> list[tuple[str, str]]:
+def _get_expression_replacements(name: str, obj: Json) -> list[tuple[str, str]]:
     return _get_replacements(name, obj, to_expression)
 
 
-def _get_full_expression_replacements(
-    name: str, obj: object
-) -> list[tuple[str, object]]:
+def _get_full_expression_replacements(name: str, obj: Json) -> list[tuple[str, Json]]:
     return _get_replacements(name, obj, lambda x: x)
 
 
-def replace_jobs_references(input_: dict[str, object]) -> dict[str, object]:
+def replace_jobs_references(input_: dict[str, Json]) -> dict[str, Json]:
     """Return the workflow with any jobs refenrences replace with needs.
 
     Nested steps are useful when using YAML references
     """
     jobs = to_json_object(input_["jobs"], "jobs")
-    new_jobs = dict[str, object]()
+    new_jobs = dict[str, Json]()
     for job_key in jobs:
         job = to_json_object(jobs[job_key], f"jobs.{job_key}")
 
         needs = to_json_array_of_strings(job.get("needs", []), f"jobs.{job_key}.needs")
-        new_needs = [_replace_job_reference(need) for need in needs]
+        new_needs: list[Json] = [_replace_job_reference(need) for need in needs]
 
         new_job = replace_identifiers(job, [("jobs", "needs")])
 

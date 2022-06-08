@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from ._validation import Json
 
 INIT_JOB_ID = "cixx-init"
 
@@ -22,7 +23,7 @@ class JobDetails:
     extra_key: str
     needs: list[str]
     force: bool
-    outputs: object
+    outputs: Json
 
 
 def _get_upstream_inclusive(

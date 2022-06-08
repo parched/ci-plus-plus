@@ -1,10 +1,12 @@
 import json
 import re
 from collections.abc import Collection, Iterator
-from typing import Callable, TypeVar, cast
+from typing import Callable, TypeVar
+
+from ._validation import Json
 
 
-def to_expression(obj: object) -> str:
+def to_expression(obj: Json) -> str:
     """Return the conversion of a object containing template strings to an expression"""
     match obj:
         case str():
@@ -13,34 +15,25 @@ def to_expression(obj: object) -> str:
             return json.dumps(obj)
         case dict() | list():
             # There is no array or object literal so need to use fromJSON
-            json_template = to_json_template(
-                # https://github.com/microsoft/pyright/issues/3552
-                obj  # pyright: ignore [reportUnknownArgumentType]
-            )
+            json_template = to_json_template(obj)
             json_expression = _format_split_template(
                 list(_split_template(json_template))
             )
             return f"""fromJSON({json_expression})"""
-        case _:
-            raise TypeError("Unsupported JSON type")
 
 
-def to_json_template(obj: object) -> str:
+def to_json_template(obj: Json) -> str:
     """Return the JSON conversion of a object containing template strings"""
     match obj:
         case str():
             return _template_str_to_json(obj)
         case dict():
-            obj_ = cast(dict[str, object], obj)
-            pairs = (f"{json.dumps(k)}:{to_json_template(v)}" for k, v in obj_.items())
+            pairs = (f"{json.dumps(k)}:{to_json_template(v)}" for k, v in obj.items())
             return f"{{{','.join(pairs)}}}"
         case list():
-            obj_ = cast(list[object], obj)
-            return f"[{','.join(to_json_template(e) for e in obj_)}]"
+            return f"[{','.join(to_json_template(e) for e in obj)}]"
         case float() | int() | bool() | None:
             return json.dumps(obj)
-        case _:
-            raise TypeError("Unsupported JSON type")
 
 
 def get_full_expression_or_none(obj: str) -> str | None:
@@ -68,10 +61,10 @@ def _template_str_to_json(obj: str) -> str:
     return f"${{{{toJson({expression})}}}}"
 
 
-T = TypeVar("T")
+_TJson = TypeVar("_TJson", bound=Json)
 
 
-def _replace_strings(obj: T, replacer: Callable[[str], object]) -> T:
+def _replace_strings(obj: Json, replacer: Callable[[str], Json]) -> Json:
     """Replace strings in an object
 
     Args:
@@ -80,32 +73,27 @@ def _replace_strings(obj: T, replacer: Callable[[str], object]) -> T:
 
     Returns:
         The obect with strings repalced
-
-    Raises:
-        TypeError: If an non JSON compatible type is encountered
     """
     match obj:
         case str():
             return replacer(obj)
         case dict():
-            obj_ = cast(dict[str, object], obj)
-            new = {k: _replace_strings(v, replacer) for k, v in obj_.items()}
-            if all(a is b for a, b in zip(new.values(), obj_.values())):
-                return obj_  # type: ignore
-            return new  # type: ignore
+            new = {k: _replace_strings(v, replacer) for k, v in obj.items()}
+            if all(a is b for a, b in zip(new.values(), obj.values())):
+                return obj
+            return new
         case list():
-            obj_ = cast(list[object], obj)
-            new = [_replace_strings(element, replacer) for element in obj_]
-            if all(a is b for a, b in zip(new, obj_)):
-                return obj_  # type: ignore
-            return new  # type: ignore
+            new = [_replace_strings(element, replacer) for element in obj]
+            if all(a is b for a, b in zip(new, obj)):
+                return obj
+            return new
         case float() | int() | bool() | None:
-            return obj  # type: ignore
-        case _:
-            raise TypeError("Unsupported JSON type")
+            return obj
 
 
-def replace_full_expressions(obj: T, replacements: Collection[tuple[str, object]]) -> T:
+def replace_full_expressions(
+    obj: dict[str, Json], replacements: Collection[tuple[str, Json]]
+) -> dict[str, Json]:
     """Replace strings that are a full expression in an object
 
     Args:
@@ -115,12 +103,14 @@ def replace_full_expressions(obj: T, replacements: Collection[tuple[str, object]
     Returns:
         The object with the full expressions replaced
     """
-    return _replace_strings(obj, lambda s: _replace_full_expression(s, replacements))
+    return _replace_strings(  # type: ignore
+        obj, lambda s: _replace_full_expression(s, replacements)
+    )
 
 
 def _replace_full_expression(
-    obj: str, replacements: Collection[tuple[str, object]]
-) -> object:
+    obj: str, replacements: Collection[tuple[str, _TJson]]
+) -> _TJson | str:
     if (full_expression := get_full_expression_or_none(obj)) is not None:
         for expression, replacement in replacements:
             if expression == full_expression:
@@ -129,7 +119,9 @@ def _replace_full_expression(
     return obj
 
 
-def replace_identifiers(obj: T, replacements: Collection[tuple[str, str]]) -> T:
+def replace_identifiers(
+    obj: _TJson, replacements: Collection[tuple[str, str]]
+) -> _TJson:
     """Replace identifiers in an object containing template strings
 
     Args:
@@ -139,7 +131,7 @@ def replace_identifiers(obj: T, replacements: Collection[tuple[str, str]]) -> T:
     Returns:
         The replaced template or the same str if no replacements
     """
-    return _replace_strings(
+    return _replace_strings(  # type: ignore
         obj, lambda s: replace_identiers_in_template_str(s, replacements)
     )
 
